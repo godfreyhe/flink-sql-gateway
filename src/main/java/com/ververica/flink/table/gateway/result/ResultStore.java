@@ -24,11 +24,13 @@ import com.ververica.flink.table.config.entries.DeploymentEntry;
 import com.ververica.flink.table.gateway.SqlExecutionException;
 
 import org.apache.flink.api.common.ExecutionConfig;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.runtime.net.ConnectionUtils;
 import org.apache.flink.table.api.TableSchema;
+import org.apache.flink.table.runtime.types.TypeInfoDataTypeConverter;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -37,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Maintains dynamic results.
@@ -60,7 +63,10 @@ public class ResultStore {
 		ExecutionConfig config,
 		ClassLoader classLoader) {
 
-		final RowTypeInfo outputType = new RowTypeInfo(schema.getFieldTypes(), schema.getFieldNames());
+		final TypeInformation[] schemaTypeInfos = Stream.of(schema.getFieldDataTypes())
+				.map(TypeInfoDataTypeConverter::fromDataTypeToTypeInfo)
+				.toArray(TypeInformation[]::new);
+		final RowTypeInfo outputType = new RowTypeInfo(schemaTypeInfos, schema.getFieldNames());
 
 		if (env.getExecution().inStreamingMode()) {
 			// determine gateway address (and port if possible)
