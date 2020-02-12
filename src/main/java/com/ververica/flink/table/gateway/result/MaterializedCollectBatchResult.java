@@ -66,6 +66,7 @@ public class MaterializedCollectBatchResult<C> extends BasicResult<C> implements
 		ClassLoader classLoader) {
 		this.outputType = outputType;
 
+		// TODO supports large result set
 		accumulatorName = new AbstractID().toString();
 		tableSink = new CollectBatchTableSink(accumulatorName, outputType.createSerializer(config), tableSchema);
 		resultLock = new Object();

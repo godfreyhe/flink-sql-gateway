@@ -194,6 +194,8 @@ public class CliClient {
 	public void open() {
 		isRunning = true;
 
+		// TODO init gateway session properties based on local environment.
+
 		// print welcome
 		terminal.writer().append(CliStrings.MESSAGE_WELCOME);
 

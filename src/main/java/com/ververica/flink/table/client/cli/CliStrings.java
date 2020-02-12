@@ -285,14 +285,6 @@ public final class CliStrings {
 			} else {
 				// handle other exception
 				String[] lines = t.getMessage().split("\n");
-				for (int i = 0; i < lines.length; ++i) {
-					String line = lines[i];
-					if (i + 1 < lines.length &&
-						line.contains("[Internal server error.") &&
-						line.contains("<Exception on server side:")) {
-						return lines[i + 1];
-					}
-				}
 				for (int i = lines.length - 1; i >= 0; i--) {
 					String line = lines[i];
 					// Caused by: xx...xxException: xx
@@ -300,6 +292,14 @@ public final class CliStrings {
 					int exceptionIdx = line.indexOf("Exception: ");
 					if (line.startsWith("Caused by: ") && exceptionIdx > causeByLen) {
 						return line.substring(causeByLen);
+					}
+				}
+				for (int i = 0; i < lines.length; ++i) {
+					String line = lines[i];
+					if (i + 1 < lines.length &&
+						line.contains("[Internal server error.") &&
+						line.contains("<Exception on server side:")) {
+						return lines[i + 1];
 					}
 				}
 			}

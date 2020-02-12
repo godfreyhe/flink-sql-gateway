@@ -53,6 +53,7 @@ public class ColumnInfo {
 		this.type = type;
 	}
 
+	// TODO delete this
 	public ColumnInfo(String name, LogicalType logicalType) {
 		this(name, logicalType.toString());
 		this.logicalType = logicalType;
