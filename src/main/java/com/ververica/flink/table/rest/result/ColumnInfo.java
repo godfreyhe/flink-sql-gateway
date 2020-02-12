@@ -25,6 +25,8 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonCre
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonProperty;
 
+import javax.annotation.Nullable;
+
 /**
  * ColumnInfo.
  */
@@ -39,12 +41,21 @@ public class ColumnInfo {
 	@JsonProperty(FIELD_NAME_TYPE)
 	private String type;
 
+	@JsonIgnore
+	@Nullable
+	private LogicalType logicalType;
+
 	@JsonCreator
 	public ColumnInfo(
 		@JsonProperty(FIELD_NAME_NAME) String name,
 		@JsonProperty(FIELD_NAME_TYPE) String type) {
 		this.name = name;
 		this.type = type;
+	}
+
+	public ColumnInfo(String name, LogicalType logicalType) {
+		this(name, logicalType.toString());
+		this.logicalType = logicalType;
 	}
 
 	public static ColumnInfo create(String name, LogicalType type) {
@@ -61,6 +72,9 @@ public class ColumnInfo {
 
 	@JsonIgnore
 	public LogicalType getLogicalType() {
-		return LogicalTypeParser.parse(type);
+		if (logicalType == null) {
+			logicalType = LogicalTypeParser.parse(type);
+		}
+		return logicalType;
 	}
 }
