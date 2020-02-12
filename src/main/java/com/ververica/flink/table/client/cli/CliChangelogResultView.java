@@ -76,7 +76,7 @@ public class CliChangelogResultView extends CliResultView<CliChangelogResultView
 		// rows are always appended at the tail and deleted from the head of the list
 		results = new LinkedList<>();
 
-		changelogStreamResult = new ChangelogStreamResult(client.getSession(), jobId);
+		changelogStreamResult = new ChangelogStreamResult(client.getSessionClient(), jobId);
 	}
 
 	// --------------------------------------------------------------------------------------------

@@ -47,6 +47,8 @@ import java.util.Map;
  *
  * <p>In future versions, we might restrict the merging or enrichment of deployment properties to not
  * allow overwriting of a deployment by a session.
+ *
+ * TODO how to distinguish the config is used for gateway or client ?
  */
 public class Environment {
 

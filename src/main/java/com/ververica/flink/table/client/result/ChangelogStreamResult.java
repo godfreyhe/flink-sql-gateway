@@ -36,8 +36,8 @@ public class ChangelogStreamResult extends StreamResult {
 	private List<Tuple2<Boolean, Row>> changeRecordBuffer;
 	private static final int CHANGE_RECORD_BUFFER_SIZE = 5_000;
 
-	public ChangelogStreamResult(SessionClient session, JobID jobId) {
-		super(session, jobId);
+	public ChangelogStreamResult(SessionClient sessionClient, JobID jobId) {
+		super(sessionClient, jobId);
 
 		// prepare for changelog
 		changeRecordBuffer = new ArrayList<>();

@@ -82,6 +82,7 @@ public class ResultStore {
 					gatewayPort,
 					classLoader);
 			} else {
+				// TODO remove this class, because gateway only returns changelog to client
 				return new MaterializedCollectStreamResult<>(
 					outputType,
 					schema,

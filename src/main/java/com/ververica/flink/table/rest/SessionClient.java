@@ -138,7 +138,7 @@ public class SessionClient {
 				EmptyRequestBody.getInstance()).get();
 		} catch (Exception e) {
 			// TODO print more message when connection refused or session not exists
-			LOG.warn("Close session client failed.", e);
+			LOG.warn("Failed to close session.", e);
 		} finally {
 			restClient.shutdown(Time.seconds(5));
 			ExecutorUtils.gracefulShutdown(5, TimeUnit.SECONDS, executor);

@@ -40,10 +40,10 @@ public class SqlCompleter implements Completer {
 
 	public static final String[] COMMAND_HINTS = getCommandHints();
 
-	private SessionClient session;
+	private SessionClient sessionClient;
 
-	public SqlCompleter(SessionClient session) {
-		this.session = session;
+	public SqlCompleter(SessionClient sessionClient) {
+		this.sessionClient = sessionClient;
 	}
 
 	public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
@@ -64,7 +64,7 @@ public class SqlCompleter implements Completer {
 
 		// fallback to Table API hinting
 		try {
-			session.completeStatement(statement, line.cursor())
+			sessionClient.completeStatement(statement, line.cursor())
 				.forEach(hint -> candidates.add(createCandidate(hint)));
 		} catch (SqlRestException e) {
 			LOG.debug("Could not complete statement at " + line.cursor() + ":" + statement, e);

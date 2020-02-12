@@ -74,6 +74,7 @@ public class StatementExecuteHandler extends AbstractRestHandler<
 			throw new RestHandlerException("Statement must be provided.", HttpResponseStatus.BAD_REQUEST);
 		}
 
+		// TODO supports this
 		Long executionTimeoutMillis = request.getRequestBody().getExecutionTimeout();
 
 		try {

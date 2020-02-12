@@ -70,11 +70,11 @@ public class CliTableResultView extends CliResultView<CliTableResultView.ResultT
 		super(client, jobId);
 		if (client.getEnvironment().getExecution().inStreamingMode()) {
 			this.materializedResult = new MaterializedStreamResult(
-				client.getSession(),
+				client.getSessionClient(),
 				jobId,
 				client.getEnvironment().getExecution().getMaxTableResultRows());
 		} else {
-			this.materializedResult = new MaterializedBatchResult(client.getSession(), jobId);
+			this.materializedResult = new MaterializedBatchResult(client.getSessionClient(), jobId);
 		}
 
 		refreshInterval = DEFAULT_REFRESH_INTERVAL;

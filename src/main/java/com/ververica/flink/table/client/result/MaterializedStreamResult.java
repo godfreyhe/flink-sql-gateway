@@ -85,8 +85,8 @@ public class MaterializedStreamResult extends StreamResult implements Materializ
 	/** Indicator that this is the last snapshot possible (EOS afterwards). */
 	private boolean isLastSnapshot;
 
-	public MaterializedStreamResult(SessionClient session, JobID jobId, int maxTableResultRows) {
-		super(session, jobId);
+	public MaterializedStreamResult(SessionClient sessionClient, JobID jobId, int maxTableResultRows) {
+		super(sessionClient, jobId);
 
 		if (maxTableResultRows <= 0) {
 			this.maxRowCount = Integer.MAX_VALUE;

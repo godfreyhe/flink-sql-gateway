@@ -36,6 +36,7 @@ import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Preconditions;
 
+import org.apache.flink.shaded.guava18.com.google.common.collect.ImmutableMap;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
 
 import org.jline.reader.EndOfFileException;
@@ -72,9 +73,9 @@ public class CliClient {
 
 	private static final Logger LOG = LoggerFactory.getLogger(CliClient.class);
 
-	private final SessionClient session;
+	private final SessionClient sessionClient;
 
-	private final Environment environment;
+	private Environment environment;
 
 	private final Terminal terminal;
 
@@ -90,7 +91,7 @@ public class CliClient {
 
 	private static final int SOURCE_MAX_SIZE = 50_000;
 
-	// the minimal session timeout is 30min,
+	// the minimal sessionClient timeout is 30min,
 	// the heartbeat interval is 15min
 	private static final int HEARTBEAT_INTERVAL = 900_000;
 
@@ -104,9 +105,9 @@ public class CliClient {
 	 * afterwards using {@link #close()}.
 	 */
 	@VisibleForTesting
-	public CliClient(Terminal terminal, SessionClient session, Environment environment) {
+	public CliClient(Terminal terminal, SessionClient sessionClient, Environment environment) {
 		this.terminal = terminal;
-		this.session = session;
+		this.sessionClient = sessionClient;
 		this.environment = environment;
 
 		// make space from previous output and test the writer
@@ -118,7 +119,7 @@ public class CliClient {
 			.terminal(terminal)
 			.appName(CliStrings.CLI_NAME)
 			.parser(new SqlMultiLineParser())
-			.completer(new SqlCompleter(session))
+			.completer(new SqlCompleter(sessionClient))
 			.build();
 		// this option is disabled for now for correct backslash escaping
 		// a "SELECT '\'" query should return a string with a backslash
@@ -141,16 +142,16 @@ public class CliClient {
 	 * Creates a CLI instance with a prepared terminal. Make sure to close the CLI instance
 	 * afterwards using {@link #close()}.
 	 */
-	public CliClient(SessionClient session, Environment environment) {
-		this(createDefaultTerminal(), session, environment);
+	public CliClient(SessionClient sessionClient, Environment environment) {
+		this(createDefaultTerminal(), sessionClient, environment);
 	}
 
 	public Terminal getTerminal() {
 		return terminal;
 	}
 
-	public SessionClient getSession() {
-		return this.session;
+	public SessionClient getSessionClient() {
+		return this.sessionClient;
 	}
 
 	public Environment getEnvironment() {
@@ -254,7 +255,7 @@ public class CliClient {
 
 		StatementExecuteResponseBody responseBody;
 		try {
-			responseBody = session.submitStatement(statement);
+			responseBody = sessionClient.submitStatement(statement);
 		} catch (SqlRestException e) {
 			throw new SqlExecutionException("Failed to submit statement");
 		}
@@ -321,7 +322,7 @@ public class CliClient {
 		boolean needCancelJob = false;
 		ResultSet resultSet = null;
 		try {
-			StatementExecuteResponseBody responseBody = session.submitStatement(statement);
+			StatementExecuteResponseBody responseBody = sessionClient.submitStatement(statement);
 			Preconditions.checkArgument(
 				responseBody.getResults().size() == 1 &&
 					responseBody.getStatementTypes().size() == 1,
@@ -338,8 +339,26 @@ public class CliClient {
 					printInfo(CliStrings.MESSAGE_RESET);
 					break;
 				case SET:
-					// TODO support show settings
-					printInfo(CliStrings.MESSAGE_SET);
+					// show all properties
+					if (resultSet.getColumns().size() == 2) {
+						if (resultSet.getData() == null || resultSet.getData().isEmpty()) {
+							terminal.writer().println(CliStrings.messageInfo(CliStrings.MESSAGE_EMPTY).toAnsi());
+						} else {
+							resultSet
+								.getData()
+								.stream()
+								.map((r) -> r.getField(0) + "=" + r.getField(1))
+								.sorted()
+								.forEach((p) -> terminal.writer().println(p));
+						}
+					} else {
+						// TODO remove this hack solution
+						Optional<SqlCommandCall> call = parseCommand(statement);
+						String key = call.get().operands[0];
+						String value = call.get().operands[1];
+						environment = Environment.enrich(environment, ImmutableMap.of(key, value), ImmutableMap.of());
+						printInfo(CliStrings.MESSAGE_SET);
+					}
 					break;
 				case SHOW_CATALOGS:
 				case SHOW_DATABASES:
@@ -421,14 +440,13 @@ public class CliClient {
 					break;
 				default:
 					throw new SqlClientException("Unsupported command: " + command);
-
 			}
-		} catch (SqlRestException | SqlClientException e) {
+		} catch (SqlExecutionException | SqlRestException | SqlClientException e) {
 			printExecutionException(e);
 			if (isConnectionRefused(e) || isSessionNotExist(e)) {
 				terminal.writer().println(CliStrings.messageInfo(
 					"Please connect to the gateway server via command: \'!connect\'.\n" +
-						"[NOTE] a new session will be created, the previous session properties were cleared."
+						"[NOTE] a new sessionClient will be created, the previous sessionClient properties were cleared."
 				).toAnsi());
 				terminal.flush();
 				isConnected = false;
@@ -437,9 +455,9 @@ public class CliClient {
 			if (needCancelJob) {
 				try {
 					JobID jobId = ResultSetUtil.getJobID(resultSet);
-					session.cancelJob(jobId);
+					sessionClient.cancelJob(jobId);
 				} catch (Exception e) {
-					printExecutionException(e);
+					// ignore the message
 				}
 			}
 		}
@@ -491,19 +509,19 @@ public class CliClient {
 	private void callConnect() {
 		if (isConnected) {
 			try {
-				session.sendHeartbeat();
+				sessionClient.sendHeartbeat();
 				printInfo("The connection is ok, ignore this command.");
 				return;
 			} catch (SqlRestException e) {
 				if (isSessionNotExist(e)) {
 					printException("Could not send heartbeat.", e);
 					printInfo("Reconnecting to the gateway... \n"
-						+ "[NOTE] A new session will be created, the previous session properties were cleared.");
+						+ "[NOTE] A new sessionClient will be created, the previous sessionClient properties were cleared.");
 				}
 			}
 		}
 		try {
-			session.reconnect();
+			sessionClient.reconnect();
 			isConnected = true;
 			printInfo("Reconnect to the gateway successfully.");
 		} catch (Exception e) {
@@ -517,7 +535,7 @@ public class CliClient {
 	}
 
 	private boolean isSessionNotExist(Exception e) {
-		String msg = "Session " + session.getSessionId() + " does not exist";
+		String msg = "Session " + sessionClient.getSessionId() + " does not exist";
 		return e.getCause().getMessage().contains(msg);
 	}
 
@@ -528,7 +546,7 @@ public class CliClient {
 			new ExecutorThreadFactory("Heartbeat-Connection-IO"));
 		heartbeatFuture = scheduledExecutor.scheduleAtFixedRate(() -> {
 			try {
-				session.sendHeartbeat();
+				sessionClient.sendHeartbeat();
 			} catch (SqlRestException e) {
 				if (isConnectionRefused(e) || isSessionNotExist(e)) {
 					isConnected = false;

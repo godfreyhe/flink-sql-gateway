@@ -35,6 +35,8 @@ public class ConstantNames {
 	public static final String EXPLANATION = "explanation";
 	public static final String SCHEMA = "schema";
 	public static final String TABLES = "tables";
+	public static final String KEY = "key";
+	public static final String VALUE = "value";
 
 	public static final String TYPE = "type";
 	public static final String TABLE_TYPE = "TABLE";

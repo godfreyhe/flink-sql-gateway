@@ -158,7 +158,7 @@ deployment:
 
 session:
 # session name which will be add the job name as the prefix if not empty
-# name:
+ name: default
 
 gateway:
   # The address that should be used by clients to connect to the gateway.

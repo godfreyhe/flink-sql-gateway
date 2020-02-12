@@ -19,7 +19,17 @@
 package com.ververica.flink.table.gateway.operation;
 
 import com.ververica.flink.table.gateway.Executor;
+import com.ververica.flink.table.rest.result.ColumnInfo;
+import com.ververica.flink.table.rest.result.ConstantNames;
 import com.ververica.flink.table.rest.result.ResultSet;
+
+import org.apache.flink.table.types.logical.VarCharType;
+import org.apache.flink.types.Row;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Operation for SET command.
@@ -40,7 +50,27 @@ public class SetOperation implements NonJobOperation {
 
 	@Override
 	public ResultSet execute() {
-		executor.setSessionProperty(sessionId, key, value);
-		return OperationUtil.AFFECTED_ROW_COUNT0;
+		// list all properties
+		if (key == null) {
+			Map<String, String> properties = executor.getSessionProperties(sessionId);
+			List<Row> data = new ArrayList<>(properties.size());
+			int maxKeyLen = 1, maxValueLen = 1;
+			for (Map.Entry<String, String> entry : properties.entrySet()) {
+				String key = entry.getKey();
+				String value = entry.getValue();
+				data.add(Row.of(key, value));
+				maxKeyLen = Math.max(maxKeyLen, key.length());
+				maxValueLen = Math.max(maxValueLen, value.length());
+			}
+			return new ResultSet(
+				Arrays.asList(
+					ColumnInfo.create(ConstantNames.KEY, new VarCharType(true, maxKeyLen)),
+					ColumnInfo.create(ConstantNames.VALUE, new VarCharType(true, maxValueLen))),
+				data);
+		} else {
+			// set a property
+			executor.setSessionProperty(sessionId, key, value);
+			return OperationUtil.AFFECTED_ROW_COUNT0;
+		}
 	}
 }

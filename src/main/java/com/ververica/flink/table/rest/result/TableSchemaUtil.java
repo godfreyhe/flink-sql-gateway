@@ -174,8 +174,8 @@ public class TableSchemaUtil {
 				JsonNode pkColumnsNode = primaryKeyNode.get(FIELD_NAME_COLUMNS);
 				JsonParser pkColumnsParser = pkColumnsNode.traverse();
 				pkColumnsParser.nextToken();
-				String[] pkClolumns = ctx.readValue(pkColumnsParser, String[].class);
-				builder.primaryKey(pkName, pkClolumns);
+				String[] pkColumns = ctx.readValue(pkColumnsParser, String[].class);
+				builder.primaryKey(pkName, pkColumns);
 			}
 
 			return builder.build();

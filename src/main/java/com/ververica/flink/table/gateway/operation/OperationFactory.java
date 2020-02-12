@@ -56,7 +56,13 @@ public class OperationFactory {
 				operation = new UpdateOperation(call.operands[0], sessionId, executor);
 				break;
 			case SET:
-				operation = new SetOperation(call.operands[0], call.operands[1], sessionId, executor);
+				// list all properties
+				if (call.operands.length == 0) {
+					operation = new SetOperation(null, null, sessionId, executor);
+				} else {
+					// set a property
+					operation = new SetOperation(call.operands[0], call.operands[1], sessionId, executor);
+				}
 				break;
 			case RESET:
 				operation = new ResetOperation(sessionId, executor);

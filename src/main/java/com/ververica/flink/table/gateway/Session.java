@@ -60,7 +60,6 @@ public class Session {
 
 		this.jobOperations = new ConcurrentHashMap<>();
 
-
 		executor.openSession(ctx);
 	}
 

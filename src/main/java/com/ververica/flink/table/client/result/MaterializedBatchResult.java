@@ -21,51 +21,33 @@ package com.ververica.flink.table.client.result;
 import com.ververica.flink.table.gateway.SqlExecutionException;
 import com.ververica.flink.table.gateway.result.TypedResult;
 import com.ververica.flink.table.rest.SessionClient;
-import com.ververica.flink.table.rest.SqlRestException;
-import com.ververica.flink.table.rest.message.ResultFetchResponseBody;
 import com.ververica.flink.table.rest.result.ResultSet;
 
 import org.apache.flink.api.common.JobID;
-import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.types.Row;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Collects results using accumulators and returns them as table snapshots.
  */
-public class MaterializedBatchResult implements Result, MaterializedResult {
-
-	private final SessionClient session;
-	private final JobID jobId;
-	private final Object resultLock;
-
+public class MaterializedBatchResult extends AbstractResult implements MaterializedResult {
 	private int pageSize;
 	private int pageCount;
-	private AtomicReference<SqlExecutionException> executionException = new AtomicReference<>();
-	private TableSchema tableSchema;
 	private List<Row> resultTable;
 
 	private volatile boolean snapshotted = false;
 
-	public MaterializedBatchResult(SessionClient session, JobID jobId) {
-		this.session = session;
-		this.jobId = jobId;
-		this.resultLock = new Object();
-		pageCount = 0;
-		fetchAllResult();
+	public MaterializedBatchResult(SessionClient sessionClient, JobID jobId) {
+		super(sessionClient, jobId);
+		this.pageCount = 0;
+		this.resultTable = new ArrayList<>();
 	}
 
 	@Override
 	public boolean isMaterialized() {
 		return true;
-	}
-
-	@Override
-	public TableSchema getTableSchema() {
-		return tableSchema;
 	}
 
 	@Override
@@ -105,55 +87,10 @@ public class MaterializedBatchResult implements Result, MaterializedResult {
 	}
 
 	@Override
-	public void close() {
-		try {
-			session.cancelJob(jobId);
-		} catch (SqlRestException e) {
-			throw new SqlExecutionException("close operation failed.", e);
-		}
-	}
-
-	// --------------------------------------------------------------------------------------------
-
-	private void fetchAllResult() {
-		resultTable = new ArrayList<>();
-		long token = 0;
-
-		while (true) {
-			ResultFetchResponseBody response;
-			try {
-				response = session.fetchResult(jobId, token);
-			} catch (SqlRestException e) {
-				throw new SqlExecutionException("fetch result failed", e);
-			}
-			if (response.getNextResultUri() == null) {
-				break;
-			}
-
-			int size = response.getResults().size();
-			if (size != 1) {
-				throw new SqlExecutionException(
-					"result should contain only one ResultSet, but " + size + " ResultSet(s) found.");
-			}
-
-			ResultSet result = response.getResults().get(0);
-			if (tableSchema == null) {
-				tableSchema = ResultUtil.convertToTableSchema(result.getColumns());
-			}
-
-			List<Row> data = result.getData();
-			if (data != null && data.size() > 0) {
-				resultTable.addAll(data);
-			} else {
-				try {
-					if (token >= 1) {
-						Thread.sleep(100);
-					}
-				} catch (InterruptedException e) {
-					throw new SqlExecutionException("fetch result failed", e);
-				}
-			}
-			token++;
+	protected void processResult(ResultSet result) {
+		List<Row> data = result.getData();
+		if (data != null && data.size() > 0) {
+			resultTable.addAll(data);
 		}
 	}
 

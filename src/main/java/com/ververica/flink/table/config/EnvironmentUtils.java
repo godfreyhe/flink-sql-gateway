@@ -48,6 +48,7 @@ public class EnvironmentUtils {
 	}
 
 	private static Environment readDefaultEnvironment(URL defaultEnv, String envFile) {
+		// TODO remove flink config dir
 		String flinkConfigDir = CliFrontend.getConfigurationDirectoryFromEnv();
 		// try to find a default environment
 		if (defaultEnv == null) {
@@ -80,7 +81,6 @@ public class EnvironmentUtils {
 			return new Environment();
 		}
 	}
-
 
 	public static Environment readSessionEnvironment(URL envUrl) {
 		// use an empty environment by default

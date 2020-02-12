@@ -66,7 +66,7 @@ public class SqlClient {
 			case MODE_EMBEDDED:
 				throw new UnsupportedOperationException("Embedded mode is unsupported now.");
 			case MODE_GATEWAY:
-				// create CLI client with session environment
+				// create CLI client with sessionClient environment
 				final Environment gatewayClientSessionEnv =
 					EnvironmentUtils.readSessionEnvironment(options.getEnvironment().orElse(null));
 				final Integer port = options.getGatewayPort().orElse(
@@ -74,9 +74,9 @@ public class SqlClient {
 				final String address = options.getGatewayHost().orElse(
 					gatewayClientSessionEnv.getGateway().getAddress());
 
-				SessionClient session;
+				SessionClient sessionClient;
 				try {
-					session = new SessionClient(
+					sessionClient = new SessionClient(
 						address,
 						port,
 						gatewayClientSessionEnv.getSession().getSessionName().orElse("Gateway-CliClient"),
@@ -84,19 +84,19 @@ public class SqlClient {
 						gatewayClientSessionEnv.getExecution().getExecutionMode(),
 						"Flink-CliClient-Gateway-Connection-IO");
 				} catch (Exception e) {
-					throw new SqlClientException("Create session failed", e);
+					throw new SqlClientException("Failed to create SessionClient.", e);
 				}
 
 				try {
-					Runtime.getRuntime().addShutdownHook(new GatewayClientShutdownThread(session));
+					Runtime.getRuntime().addShutdownHook(new GatewayClientShutdownThread(sessionClient));
 					// do the actual work
-					openCli(session, gatewayClientSessionEnv);
+					openCli(sessionClient, gatewayClientSessionEnv);
 				} finally {
 					try {
-						session.close();
+						sessionClient.close();
 					} catch (Exception e) {
-						System.err.println("Close session client failed: " + e.getMessage());
-						LOG.warn("Close session client failed.", e);
+						System.err.println("Failed to close SessionClient: " + e.getMessage());
+						LOG.warn("Failed to close SessionClient.", e);
 					}
 				}
 
@@ -105,10 +105,10 @@ public class SqlClient {
 	}
 
 
-	private void openCli(SessionClient client, Environment environment) {
+	private void openCli(SessionClient sessionClient, Environment environment) {
 		CliClient cli = null;
 		try {
-			cli = new CliClient(client, environment);
+			cli = new CliClient(sessionClient, environment);
 			// interactive CLI mode
 			if (!options.getUpdateStatement().isPresent()) {
 				cli.open();
@@ -196,7 +196,7 @@ public class SqlClient {
 		@Override
 		public void run() {
 			// Shutdown the executor
-			System.out.println("\nShutting down the session...");
+			System.out.println("\nShutting down the SessionClient...");
 			executor.closeSession(sessionId);
 			System.out.println("done.");
 		}
@@ -204,21 +204,21 @@ public class SqlClient {
 
 	private static class GatewayClientShutdownThread extends Thread {
 
-		private final SessionClient session;
+		private final SessionClient sessionClient;
 
-		public GatewayClientShutdownThread(SessionClient session) {
-			this.session = session;
+		public GatewayClientShutdownThread(SessionClient sessionClient) {
+			this.sessionClient = sessionClient;
 		}
 
 		@Override
 		public void run() {
 			// Shutdown the executor
-			System.out.println("\nShutting down the session...");
+			System.out.println("\nShutting down the SessionClient...");
 			try {
-				session.close();
+				sessionClient.close();
 			} catch (Exception e) {
-				System.err.println("Close session client failed: " + e.getMessage());
-				LOG.warn("Close session client failed.", e);
+				System.err.println("Failed to close SessionClient: " + e.getMessage());
+				LOG.warn("Failed to close SessionClient.", e);
 			}
 			System.out.println("done.");
 		}
