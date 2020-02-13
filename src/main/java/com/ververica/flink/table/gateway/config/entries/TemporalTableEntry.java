@@ -24,6 +24,7 @@ import java.util.List;
 
 /**
  * Configuration of a temporal table.
+ * TODO remove this.
  */
 public class TemporalTableEntry extends TableEntry {
 

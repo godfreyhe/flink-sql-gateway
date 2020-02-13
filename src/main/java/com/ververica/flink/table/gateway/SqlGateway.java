@@ -36,7 +36,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
 /**
- * SqlGateway.
+ * Sql gateway .
  */
 public class SqlGateway {
 
@@ -51,7 +51,7 @@ public class SqlGateway {
 	}
 
 	private void start() throws Exception {
-		final Environment defaultEnv = readEnvironment(options.getDefaults().orElse(null));
+		final Environment defaultEnv = readEnvironment(options.getDefaultConfig().orElse(null));
 
 		final Integer port = options.getPort().orElse(defaultEnv.getServer().getPort());
 		final String address = defaultEnv.getServer().getAddress();
@@ -81,19 +81,19 @@ public class SqlGateway {
 			return new Environment();
 		}
 
-		System.out.println("Reading session environment from: " + envUrl);
-		LOG.info("Using session environment file: {}", envUrl);
+		System.out.println("Reading configuration from: " + envUrl);
+		LOG.info("Using configuration file: {}", envUrl);
 		try {
 			return Environment.parse(envUrl);
 		} catch (IOException e) {
-			throw new SqlGatewayException("Could not read session environment file at: " + envUrl, e);
+			throw new SqlGatewayException("Could not read configuration file at: " + envUrl, e);
 		}
 	}
 
 	// --------------------------------------------------------------------------------------------
 
 	public static void main(String[] args) {
-		final GatewayOptions options = GatewayOptionsParser.parseGatewayModeGateway(args);
+		final GatewayOptions options = GatewayOptionsParser.parseGatewayOptions(args);
 		if (options.isPrintHelp()) {
 			GatewayOptionsParser.printHelp();
 		} else {
@@ -130,6 +130,7 @@ public class SqlGateway {
 		public void run() {
 			// Shutdown the gateway
 			System.out.println("\nShutting down the gateway...");
+			LOG.info("Shutting down the gateway...");
 			if (gateway.endpoint != null) {
 				try {
 					gateway.endpoint.closeAsync();
@@ -146,6 +147,7 @@ public class SqlGateway {
 					System.out.println("Failed to shut down the session manger: " + e.getMessage());
 				}
 			}
+			LOG.info("done.");
 			System.out.println("done.");
 		}
 	}

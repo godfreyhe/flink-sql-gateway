@@ -22,9 +22,15 @@ import com.ververica.flink.table.gateway.SqlGatewayException;
 import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
 /**
- * Operation interface.
+ * Operation is a specific representation of a command (e.g. SELECT, SHOW, CREATE),
+ * which could execute the command and return the result.
  */
 public interface Operation {
 
+	/**
+	 * Execute the command and return the result.
+	 *
+	 * @throws SqlGatewayException
+	 */
 	ResultSet execute() throws SqlGatewayException;
 }

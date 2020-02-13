@@ -18,6 +18,7 @@
 
 package com.ververica.flink.table.gateway.rest.handler;
 
+import com.ververica.flink.table.gateway.Session;
 import com.ververica.flink.table.gateway.SessionManager;
 import com.ververica.flink.table.gateway.SqlGatewayException;
 import com.ververica.flink.table.gateway.rest.message.JobIdPathParameter;
@@ -71,15 +72,16 @@ public class ResultFetchHandler
 		String sessionId = request.getPathParameter(SessionIdPathParameter.class);
 		JobID jobId = request.getPathParameter(JobIdPathParameter.class);
 		Long resultToken = request.getPathParameter(ResultTokenPathParameter.class);
-		Integer fetchSize = request.getRequestBody().getFetchSize();
+		Integer maxFetchSize = request.getRequestBody().getMaxFetchSize();
 
-		if (fetchSize != null && fetchSize <= 0) {
-			throw new RestHandlerException("Fetch size must be positive.", HttpResponseStatus.BAD_REQUEST);
+		if (maxFetchSize != null && maxFetchSize <= 0) {
+			throw new RestHandlerException("Max fetch size must be positive.", HttpResponseStatus.BAD_REQUEST);
 		}
+		maxFetchSize = maxFetchSize == null ? 0 : maxFetchSize;
 
 		try {
-			Optional<ResultSet> resultSet = sessionManager.getSession(sessionId).getJobResult(
-				jobId, resultToken, fetchSize == null ? 0 : fetchSize);
+			Session session = sessionManager.getSession(sessionId);
+			Optional<ResultSet> resultSet = session.getJobResult(jobId, resultToken, maxFetchSize);
 			List<ResultSet> results = null;
 			if (resultSet.isPresent()) {
 				results = Collections.singletonList(resultSet.get());

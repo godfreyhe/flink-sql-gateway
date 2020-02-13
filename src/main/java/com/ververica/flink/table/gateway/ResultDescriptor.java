@@ -21,8 +21,6 @@ package com.ververica.flink.table.gateway;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.table.api.TableSchema;
 
-import javax.annotation.Nullable;
-
 import java.util.Optional;
 
 /**
@@ -36,16 +34,9 @@ public class ResultDescriptor {
 
 	private final boolean isMaterialized;
 
-	// TODO refactor this
-	@Nullable
 	private final JobClient jobClient;
 
-	public ResultDescriptor(String resultId, TableSchema resultSchema, boolean isMaterialized) {
-		this(resultId, resultSchema, isMaterialized, null);
-	}
-
-	public ResultDescriptor(String resultId, TableSchema resultSchema, boolean isMaterialized,
-		@Nullable JobClient jobClient) {
+	public ResultDescriptor(String resultId, TableSchema resultSchema, boolean isMaterialized, JobClient jobClient) {
 		this.resultId = resultId;
 		this.resultSchema = resultSchema;
 		this.isMaterialized = isMaterialized;

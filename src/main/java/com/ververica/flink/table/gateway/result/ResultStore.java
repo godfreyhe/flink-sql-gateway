@@ -82,15 +82,7 @@ public class ResultStore {
 					gatewayPort,
 					classLoader);
 			} else {
-				// TODO remove this class, because gateway only returns changelog to client
-				return new MaterializedCollectStreamResult<>(
-					outputType,
-					schema,
-					config,
-					gatewayAddress,
-					gatewayPort,
-					env.getExecution().getMaxTableResultRows(),
-					classLoader);
+				throw new SqlExecutionException("Results of streaming queries can only be served in changelog mode.");
 			}
 
 		} else {

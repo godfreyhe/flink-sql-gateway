@@ -19,6 +19,7 @@
 package com.ververica.flink.table.gateway.config.entries;
 
 import com.ververica.flink.table.gateway.config.ConfigUtil;
+import com.ververica.flink.table.gateway.config.Environment;
 
 import org.apache.flink.client.cli.CliFrontendParser;
 import org.apache.flink.table.descriptors.DescriptorProperties;

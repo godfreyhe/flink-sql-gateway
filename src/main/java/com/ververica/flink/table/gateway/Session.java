@@ -36,7 +36,8 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Session.
+ * Similar to HTTP Session, which could maintain user identity and store user-specific data
+ * during multiple request/response interactions between a client and the gateway server.
  */
 public class Session {
 	private static final Logger LOG = LoggerFactory.getLogger(Session.class);
@@ -74,9 +75,7 @@ public class Session {
 	}
 
 	public Tuple2<ResultSet, SqlCommandParser.SqlCommand> runStatement(String statement) throws SqlGatewayException {
-		if (LOG.isDebugEnabled()) {
-			LOG.debug(String.format("Session: %s, run statement: %s", sessionId, statement));
-		}
+		LOG.debug(String.format("Session: %s, run statement: %s", sessionId, statement));
 		Optional<SqlCommandCall> callOpt = SqlCommandParser.parse(statement);
 		if (!callOpt.isPresent()) {
 			LOG.error(String.format("Session: %s, Unknown statement: %s", sessionId, statement));
@@ -96,16 +95,20 @@ public class Session {
 	}
 
 	public JobStatus getJobStatus(JobID jobId) throws SqlGatewayException {
+		LOG.info(String.format("Session: %s, get status for job: %s", sessionId, jobId));
 		return getJobOperation(jobId).getJobStatus();
 	}
 
 	public void cancelJob(JobID jobId) throws SqlGatewayException {
+		LOG.info(String.format("Session: %s, cancel job: %s", sessionId, jobId));
 		getJobOperation(jobId).cancelJob();
 		jobOperations.remove(jobId);
 	}
 
-	public Optional<ResultSet> getJobResult(JobID jobId, long token, int fetchSize) throws SqlGatewayException {
-		return getJobOperation(jobId).getJobResult(token, fetchSize);
+	public Optional<ResultSet> getJobResult(JobID jobId, long token, int maxFetchSize) throws SqlGatewayException {
+		LOG.info(String.format("Session: %s, get result for job: %s, token: %s, maxFetchSize: %s",
+			sessionId, jobId, token, maxFetchSize));
+		return getJobOperation(jobId).getJobResult(token, maxFetchSize);
 	}
 
 	private JobOperation getJobOperation(JobID jobId) throws SqlGatewayException {

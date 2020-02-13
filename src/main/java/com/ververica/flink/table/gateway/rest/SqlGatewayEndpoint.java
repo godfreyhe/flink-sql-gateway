@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * SqlGatewayEndpoint.
+ * A RestServerEndpoint for sql gateway.
  */
 public class SqlGatewayEndpoint extends RestServerEndpoint {
 
@@ -68,38 +68,38 @@ public class SqlGatewayEndpoint extends RestServerEndpoint {
 		CompletableFuture<String> localAddressFuture) {
 		Time timeout = Time.seconds(1);
 
-		SessionCreateHandler sessionCreateHandler = new SessionCreateHandler(
+		final SessionCreateHandler sessionCreateHandler = new SessionCreateHandler(
 			sessionManager, timeout, responseHeaders, SessionCreateHeaders.getInstance());
 
-		SessionHeartbeatHandler sessionHeartbeatHandler = new SessionHeartbeatHandler(
-			sessionManager, timeout, responseHeaders, SessionHeartbeatHeaders.getInstance());
-
-		JobStatusHandler jobStatusHandler = new JobStatusHandler(
-			sessionManager, timeout, responseHeaders, JobStatusHeaders.getInstance());
-
-		StatementExecuteHandler statementExecuteHandler = new StatementExecuteHandler(
-			sessionManager, timeout, responseHeaders, StatementExecuteHeaders.getInstance());
-
-		ResultFetchHandler resultFetchHandler = new ResultFetchHandler(
-			sessionManager, timeout, responseHeaders, ResultFetchHeaders.getInstance());
-
-		JobCancelHandler jobCancelHandler = new JobCancelHandler(
-			sessionManager, timeout, responseHeaders, JobCancelHeaders.getInstance());
-
-		SessionCloseHandler sessionCloseHandler = new SessionCloseHandler(
+		final SessionCloseHandler sessionCloseHandler = new SessionCloseHandler(
 			sessionManager, timeout, responseHeaders, SessionCloseHeaders.getInstance());
 
-		GetInfoHandler getInfoHandler = new GetInfoHandler(
+		final SessionHeartbeatHandler sessionHeartbeatHandler = new SessionHeartbeatHandler(
+			sessionManager, timeout, responseHeaders, SessionHeartbeatHeaders.getInstance());
+
+		final StatementExecuteHandler statementExecuteHandler = new StatementExecuteHandler(
+			sessionManager, timeout, responseHeaders, StatementExecuteHeaders.getInstance());
+
+		final JobStatusHandler jobStatusHandler = new JobStatusHandler(
+			sessionManager, timeout, responseHeaders, JobStatusHeaders.getInstance());
+
+		final JobCancelHandler jobCancelHandler = new JobCancelHandler(
+			sessionManager, timeout, responseHeaders, JobCancelHeaders.getInstance());
+
+		final ResultFetchHandler resultFetchHandler = new ResultFetchHandler(
+			sessionManager, timeout, responseHeaders, ResultFetchHeaders.getInstance());
+
+		final GetInfoHandler getInfoHandler = new GetInfoHandler(
 			timeout, responseHeaders, GetInfoHeaders.getInstance());
 
 		ArrayList<Tuple2<RestHandlerSpecification, ChannelInboundHandler>> handlers = new ArrayList<>(30);
 		handlers.add(Tuple2.of(SessionCreateHeaders.getInstance(), sessionCreateHandler));
-		handlers.add(Tuple2.of(SessionHeartbeatHeaders.getInstance(), sessionHeartbeatHandler));
-		handlers.add(Tuple2.of(JobStatusHeaders.getInstance(), jobStatusHandler));
-		handlers.add(Tuple2.of(StatementExecuteHeaders.getInstance(), statementExecuteHandler));
-		handlers.add(Tuple2.of(ResultFetchHeaders.getInstance(), resultFetchHandler));
-		handlers.add(Tuple2.of(JobCancelHeaders.getInstance(), jobCancelHandler));
 		handlers.add(Tuple2.of(SessionCloseHeaders.getInstance(), sessionCloseHandler));
+		handlers.add(Tuple2.of(SessionHeartbeatHeaders.getInstance(), sessionHeartbeatHandler));
+		handlers.add(Tuple2.of(StatementExecuteHeaders.getInstance(), statementExecuteHandler));
+		handlers.add(Tuple2.of(JobStatusHeaders.getInstance(), jobStatusHandler));
+		handlers.add(Tuple2.of(JobCancelHeaders.getInstance(), jobCancelHandler));
+		handlers.add(Tuple2.of(ResultFetchHeaders.getInstance(), resultFetchHandler));
 		handlers.add(Tuple2.of(GetInfoHeaders.getInstance(), getInfoHandler));
 
 		return handlers;

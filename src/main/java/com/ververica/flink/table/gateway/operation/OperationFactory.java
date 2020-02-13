@@ -19,15 +19,15 @@
 package com.ververica.flink.table.gateway.operation;
 
 import com.ververica.flink.table.gateway.Executor;
-import com.ververica.flink.table.gateway.SqlCommandParser;
+import com.ververica.flink.table.gateway.SqlCommandParser.SqlCommandCall;
 
 /**
- * Util class.
+ * The factory to create {@link Operation} based on {@link SqlCommandCall}.
  */
 public class OperationFactory {
 
 	public static Operation createOperation(
-		SqlCommandParser.SqlCommandCall call,
+		SqlCommandCall call,
 		String sessionId,
 		Executor executor) {
 

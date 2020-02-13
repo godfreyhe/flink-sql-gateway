@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * A set of statement result containing column infos, rows of data and change flags for streaming mode.
+ * A set of statement execution result containing column infos, rows of data and change flags for streaming mode.
  */
 @JsonSerialize(using = ResultSetJsonSerializer.class)
 @JsonDeserialize(using = ResultSetJsonDeserializer.class)

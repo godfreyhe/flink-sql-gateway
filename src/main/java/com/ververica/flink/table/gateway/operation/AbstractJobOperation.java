@@ -68,7 +68,7 @@ public abstract class AbstractJobOperation implements JobOperation {
 	}
 
 	@Override
-	public synchronized Optional<ResultSet> getJobResult(long token, int fetchSize) throws SqlGatewayException {
+	public synchronized Optional<ResultSet> getJobResult(long token, int maxFetchSize) throws SqlGatewayException {
 		if (token == currentToken) {
 			if (noMoreResults) {
 				return Optional.empty();
@@ -104,14 +104,14 @@ public abstract class AbstractJobOperation implements JobOperation {
 				currentToken++;
 			}
 
-			previousFetchSize = fetchSize;
-			if (fetchSize > 0) {
-				previousResultSetSize = Math.min(bufferedResults.size(), fetchSize);
+			previousFetchSize = maxFetchSize;
+			if (maxFetchSize > 0) {
+				previousResultSetSize = Math.min(bufferedResults.size(), maxFetchSize);
 			} else {
 				previousResultSetSize = bufferedResults.size();
 			}
 		} else if (token == currentToken - 1 && token >= 0) {
-			if (previousFetchSize != fetchSize) {
+			if (previousFetchSize != maxFetchSize) {
 				throw new SqlGatewayException("As the same token is provided, fetch size must be the same.");
 			}
 		} else {

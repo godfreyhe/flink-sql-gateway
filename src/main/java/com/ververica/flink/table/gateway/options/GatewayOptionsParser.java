@@ -62,9 +62,9 @@ public class GatewayOptionsParser {
 		.required(false)
 		.longOpt("defaults")
 		.numberOfArgs(1)
-		.argName("default environment file")
+		.argName("default configuration file")
 		.desc(
-			"The environment properties with which every new session is initialized. " +
+			"The properties with which every new session is initialized. " +
 				"Properties might be overwritten by session properties.")
 		.build();
 
@@ -108,7 +108,7 @@ public class GatewayOptionsParser {
 
 		HelpFormatter formatter = new HelpFormatter();
 		formatter.setLeftPadding(5);
-		formatter.setWidth(80);
+		formatter.setWidth(100);
 
 		formatter.printHelp(" ", GATEWAY_OPTIONS);
 
@@ -119,14 +119,13 @@ public class GatewayOptionsParser {
 	//  Line Parsing
 	// --------------------------------------------------------------------------------------------
 
-	public static GatewayOptions parseGatewayModeGateway(String[] args) {
+	public static GatewayOptions parseGatewayOptions(String[] args) {
 		try {
 			DefaultParser parser = new DefaultParser();
 			CommandLine line = parser.parse(GATEWAY_OPTIONS, args, true);
 			Integer port = null;
 			if (line.hasOption(GatewayOptionsParser.OPTION_PORT.getOpt())) {
-				port = Integer
-					.valueOf(line.getOptionValue(GatewayOptionsParser.OPTION_PORT.getOpt()));
+				port = Integer.valueOf(line.getOptionValue(GatewayOptionsParser.OPTION_PORT.getOpt()));
 			}
 			return new GatewayOptions(
 				line.hasOption(GatewayOptionsParser.OPTION_HELP.getOpt()),

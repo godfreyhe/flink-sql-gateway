@@ -19,7 +19,7 @@
 package com.ververica.flink.table.gateway;
 
 /**
- * SqlGatewayException.
+ * Exception thrown in gateway.
  */
 public class SqlGatewayException extends RuntimeException {
 

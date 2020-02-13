@@ -26,24 +26,24 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Gateway options to configure the gateway.
+ * Gateway options to configure the gateway server.
  */
 public class GatewayOptions {
 	private final boolean isPrintHelp;
 	private final Integer port;
-	private final URL defaults;
+	private final URL defaultConfig;
 	private final List<URL> jars;
 	private final List<URL> libraryDirs;
 
 	public GatewayOptions(
 		boolean isPrintHelp,
 		@Nullable Integer port,
-		@Nullable URL defaults,
+		@Nullable URL defaultConfig,
 		@Nullable List<URL> jars,
 		@Nullable List<URL> libraryDirs) {
 		this.isPrintHelp = isPrintHelp;
 		this.port = port;
-		this.defaults = defaults;
+		this.defaultConfig = defaultConfig;
 		this.jars = jars != null ? jars : Collections.emptyList();
 		this.libraryDirs = libraryDirs != null ? libraryDirs : Collections.emptyList();
 	}
@@ -56,8 +56,8 @@ public class GatewayOptions {
 		return Optional.ofNullable(port);
 	}
 
-	public Optional<URL> getDefaults() {
-		return Optional.ofNullable(defaults);
+	public Optional<URL> getDefaultConfig() {
+		return Optional.ofNullable(defaultConfig);
 	}
 
 	public List<URL> getJars() {
@@ -66,16 +66,5 @@ public class GatewayOptions {
 
 	public List<URL> getLibraryDirs() {
 		return libraryDirs;
-	}
-
-	@Override
-	public String toString() {
-		return "GatewayOptions{" +
-			"isPrintHelp=" + isPrintHelp +
-			", port=" + port +
-			", defaults=" + defaults +
-			", jars=" + jars +
-			", libraryDirs=" + libraryDirs +
-			'}';
 	}
 }

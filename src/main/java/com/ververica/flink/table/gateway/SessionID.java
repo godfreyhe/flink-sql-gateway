@@ -18,7 +18,6 @@
 
 package com.ververica.flink.table.gateway;
 
-import org.apache.flink.annotation.Public;
 import org.apache.flink.util.AbstractID;
 import org.apache.flink.util.StringUtils;
 
@@ -27,7 +26,6 @@ import java.nio.ByteBuffer;
 /**
  * Unique (at least statistically unique) identifier for a Session.
  */
-@Public
 public final class SessionID extends AbstractID {
 
 	private static final long serialVersionUID = 1L;

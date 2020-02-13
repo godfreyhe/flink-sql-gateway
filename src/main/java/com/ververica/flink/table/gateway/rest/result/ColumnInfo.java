@@ -28,7 +28,7 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonPro
 import javax.annotation.Nullable;
 
 /**
- * ColumnInfo.
+ * A column info represents a table column's structure with column name, column type.
  */
 public class ColumnInfo {
 

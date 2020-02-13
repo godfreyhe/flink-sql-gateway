@@ -32,6 +32,9 @@ import org.apache.flink.runtime.rest.messages.MessageHeaders;
 
 import org.apache.flink.shaded.netty4.io.netty.handler.codec.http.HttpResponseStatus;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.annotation.Nonnull;
 
 import java.util.Map;
@@ -42,6 +45,8 @@ import java.util.concurrent.CompletableFuture;
  */
 public class SessionHeartbeatHandler
 	extends AbstractRestHandler<EmptyRequestBody, EmptyResponseBody, SessionMessageParameters> {
+
+	private static final Logger LOG = LoggerFactory.getLogger(SessionHeartbeatHandler.class);
 
 	private SessionManager sessionManager;
 
@@ -61,6 +66,7 @@ public class SessionHeartbeatHandler
 
 		String sessionId = request.getPathParameter(SessionIdPathParameter.class);
 		try {
+			LOG.info(String.format("heartbeat for Session: %s", sessionId));
 			sessionManager.getSession(sessionId);
 			return CompletableFuture.completedFuture(EmptyResponseBody.getInstance());
 		} catch (SqlGatewayException e) {

@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Util class.
+ * Utility class for {@link Operation}.
  */
 public class OperationUtil {
 

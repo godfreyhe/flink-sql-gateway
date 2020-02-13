@@ -23,6 +23,9 @@ import com.ververica.flink.table.gateway.ExecutorImpl;
 import com.ververica.flink.table.gateway.rest.result.ConstantNames;
 import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
+/**
+ * Operation for SHOW CURRENT CATALOG command.
+ */
 public class ShowCurrentCatalogOperation implements NonJobOperation {
 	private final String sessionId;
 	private final Executor executor;

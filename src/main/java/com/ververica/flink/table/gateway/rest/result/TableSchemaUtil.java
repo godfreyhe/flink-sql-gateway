@@ -41,6 +41,9 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ser.std.S
 
 import java.io.IOException;
 
+/**
+ * Utility class to convert {@link TableSchema} from/to JSON.
+ */
 public class TableSchemaUtil {
 
 	private static final String FIELD_NAME_COLUMNS = "columns";

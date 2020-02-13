@@ -44,11 +44,6 @@ import java.util.Map;
  * Environment configuration that represents the content of an environment file. Environment files
  * define server, session, catalogs, tables, execution, and deployment behavior.
  * An environment might be defined by default or as part of a session. Environments can be merged or enriched with properties.
- *
- * <p>In future versions, we might restrict the merging or enrichment of deployment properties to not
- * allow overwriting of a deployment by a session.
- *
- * TODO update the comment.
  */
 public class Environment {
 
@@ -61,6 +56,10 @@ public class Environment {
 	public static final String CONFIGURATION_ENTRY = "table";
 
 	public static final String DEPLOYMENT_ENTRY = "deployment";
+
+	private ServerEntry server;
+
+	private SessionEntry session;
 
 	private Map<String, ModuleEntry> modules;
 
@@ -76,11 +75,9 @@ public class Environment {
 
 	private DeploymentEntry deployment;
 
-	private SessionEntry session;
-
-	private ServerEntry server;
-
 	public Environment() {
+		this.server = ServerEntry.DEFAULT_INSTANCE;
+		this.session = SessionEntry.DEFAULT_INSTANCE;
 		this.modules = new LinkedHashMap<>();
 		this.catalogs = Collections.emptyMap();
 		this.tables = Collections.emptyMap();
@@ -88,8 +85,22 @@ public class Environment {
 		this.execution = ExecutionEntry.DEFAULT_INSTANCE;
 		this.configuration = ConfigurationEntry.DEFAULT_INSTANCE;
 		this.deployment = DeploymentEntry.DEFAULT_INSTANCE;
-		this.session = SessionEntry.DEFAULT_INSTANCE;
-		this.server = ServerEntry.DEFAULT_INSTANCE;
+	}
+
+	public void setSession(Map<String, Object> config) {
+		this.session = SessionEntry.create(config);
+	}
+
+	public SessionEntry getSession() {
+		return session;
+	}
+
+	public void setServer(Map<String, Object> config) {
+		this.server = ServerEntry.create(config);
+	}
+
+	public ServerEntry getServer() {
+		return server;
 	}
 
 	public Map<String, ModuleEntry> getModules() {
@@ -188,25 +199,13 @@ public class Environment {
 		return deployment;
 	}
 
-	public void setSession(Map<String, Object> config) {
-		this.session = SessionEntry.create(config);
-	}
-
-	public SessionEntry getSession() {
-		return session;
-	}
-
-	public void setServer(Map<String, Object> config) {
-		this.server = ServerEntry.create(config);
-	}
-
-	public ServerEntry getServer() {
-		return server;
-	}
-
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
+		sb.append("==================== Server =====================\n");
+		server.asTopLevelMap().forEach((k, v) -> sb.append(k).append(": ").append(v).append('\n'));
+		sb.append("==================== Session =====================\n");
+		session.asTopLevelMap().forEach((k, v) -> sb.append(k).append(": ").append(v).append('\n'));
 		sb.append("===================== Modules =====================\n");
 		modules.forEach((name, module) -> {
 			sb.append("- ").append(ModuleEntry.MODULE_NAME).append(": ").append(name).append("\n");
@@ -233,10 +232,6 @@ public class Environment {
 		configuration.asMap().forEach((k, v) -> sb.append(k).append(": ").append(v).append('\n'));
 		sb.append("=================== Deployment ===================\n");
 		deployment.asTopLevelMap().forEach((k, v) -> sb.append(k).append(": ").append(v).append('\n'));
-		sb.append("==================== Session =====================\n");
-		session.asTopLevelMap().forEach((k, v) -> sb.append(k).append(": ").append(v).append('\n'));
-		sb.append("==================== Gateway =====================\n");
-		server.asTopLevelMap().forEach((k, v) -> sb.append(k).append(": ").append(v).append('\n'));
 		return sb.toString();
 	}
 
@@ -270,6 +265,12 @@ public class Environment {
 	public static Environment merge(Environment env1, Environment env2) {
 		final Environment mergedEnv = new Environment();
 
+		// merge server properties
+		mergedEnv.server = ServerEntry.merge(env1.getServer(), env2.getServer());
+
+		// merge session properties
+		mergedEnv.session = SessionEntry.merge(env1.getSession(), env2.getSession());
+
 		// merge modules
 		final Map<String, ModuleEntry> modules = new LinkedHashMap<>(env1.getModules());
 		modules.putAll(env2.getModules());
@@ -298,12 +299,6 @@ public class Environment {
 
 		// merge deployment properties
 		mergedEnv.deployment = DeploymentEntry.merge(env1.getDeployment(), env2.getDeployment());
-
-		// merge session properties
-		mergedEnv.session = SessionEntry.merge(env1.getSession(), env2.getSession());
-
-		// merge server properties
-		mergedEnv.server = ServerEntry.merge(env1.getServer(), env2.getServer());
 
 		return mergedEnv;
 	}

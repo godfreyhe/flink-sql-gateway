@@ -21,6 +21,9 @@ package com.ververica.flink.table.gateway;
 import com.ververica.flink.table.gateway.config.Environment;
 import com.ververica.flink.table.gateway.config.entries.ExecutionEntry;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,9 +34,11 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * SessionManager.
+ * Session manager.
  */
 public class SessionManager {
+	private static final Logger LOG = LoggerFactory.getLogger(SessionManager.class);
+
 	private final Environment defaultEnvironment;
 	private final Executor executor;
 
@@ -60,20 +65,27 @@ public class SessionManager {
 		if (checkInterval > 0 && idleTimeout > 0) {
 			executorService = Executors.newSingleThreadScheduledExecutor();
 			timeoutCheckerFuture = executorService.scheduleAtFixedRate(() -> {
+				LOG.info("Start to remove expired session, current session count: " + sessions.size());
 				for (Map.Entry<String, Session> entry : sessions.entrySet()) {
-					if (isSessionExpired(entry.getValue())) {
-						closeSession(entry.getValue());
+					String sessionId = entry.getKey();
+					Session session = entry.getValue();
+					if (isSessionExpired(session)) {
+						LOG.info(String.format("Session: %s is expired, close it...", sessionId));
+						closeSession(session);
 					}
 				}
+				LOG.info("Remove expired session finished, current session count: " + sessions.size());
 			}, checkInterval, checkInterval, TimeUnit.MILLISECONDS);
 		}
 	}
 
 	public void close() {
+		LOG.info("Start to close SessionManager");
 		if (executorService != null) {
 			timeoutCheckerFuture.cancel(true);
 			executorService.shutdown();
 		}
+		LOG.info("SessionManager is closed");
 	}
 
 	public String createSession(
@@ -106,29 +118,32 @@ public class SessionManager {
 		Session session = new Session(ctx, executor);
 		sessions.put(sessionId, session);
 
+		LOG.info(String.format(
+			"Session: %s is created. sessionName: %s, planner: %s, executionType: %s, properties: %s.",
+			sessionId, sessionName, planner, executionType, properties));
+
 		return sessionId;
 	}
 
 	public void closeSession(String sessionId) throws SqlGatewayException {
-		Session session = sessions.get(sessionId);
-		if (session == null) {
-			throw new SqlGatewayException("Session " + sessionId + " does not exist.");
-		} else {
-			closeSession(session);
-		}
+		Session session = getSession(sessionId);
+		closeSession(session);
 	}
 
 	private void closeSession(Session session) {
 		String sessionId = session.getSessionContext().getSessionId();
 		session.close();
 		sessions.remove(sessionId);
+		LOG.info(String.format("Session: %s is closed.", sessionId));
 	}
 
 	public Session getSession(String sessionId) throws SqlGatewayException {
 		// TODO lock sessions to prevent fetching an expired session?
 		Session session = sessions.get(sessionId);
 		if (session == null) {
-			throw new SqlGatewayException("Session " + sessionId + " does not exist.");
+			String msg = "Session " + sessionId + " does not exist.";
+			LOG.error(msg);
+			throw new SqlGatewayException(msg);
 		}
 		session.touch();
 		return session;
@@ -139,7 +154,9 @@ public class SessionManager {
 			return;
 		}
 		if (sessions.size() > maxCount) {
-			throw new SqlGatewayException("the count of alive session exceeds the max count: " + maxCount);
+			String msg = "Failed to create session, the count of alive session exceeds the max count: " + maxCount;
+			LOG.error(msg);
+			throw new SqlGatewayException(msg);
 		}
 	}
 
@@ -150,4 +167,5 @@ public class SessionManager {
 			return false;
 		}
 	}
+
 }

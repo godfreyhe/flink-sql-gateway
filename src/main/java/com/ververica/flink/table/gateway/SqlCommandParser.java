@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
 
 /**
  * Simple parser for determining the type of command and its parameters.
+ * TODO refactor using flink-sql-parser
  */
 public final class SqlCommandParser {
 

@@ -31,19 +31,19 @@ import javax.annotation.Nullable;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ResultFetchRequestBody implements RequestBody {
 
-	private static final String FIELD_NAME_FETCH_SIZE = "fetch_size";
+	private static final String FIELD_NAME_MAX_FETCH_SIZE = "max_fetch_size";
 
-	@JsonProperty(FIELD_NAME_FETCH_SIZE)
+	@JsonProperty(FIELD_NAME_MAX_FETCH_SIZE)
 	@Nullable
-	private final Integer fetchSize;
+	private final Integer maxFetchSize;
 
 	public ResultFetchRequestBody(
-		@Nullable @JsonProperty(FIELD_NAME_FETCH_SIZE) Integer fetchSize) {
-		this.fetchSize = fetchSize;
+		@Nullable @JsonProperty(FIELD_NAME_MAX_FETCH_SIZE) Integer maxFetchSize) {
+		this.maxFetchSize = maxFetchSize;
 	}
 
 	@Nullable
-	public Integer getFetchSize() {
-		return fetchSize;
+	public Integer getMaxFetchSize() {
+		return maxFetchSize;
 	}
 }

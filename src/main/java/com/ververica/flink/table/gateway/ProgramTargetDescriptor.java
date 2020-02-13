@@ -21,27 +21,19 @@ package com.ververica.flink.table.gateway;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.core.execution.JobClient;
 
-import static org.apache.flink.util.Preconditions.checkNotNull;
-
 /**
  * Describes the target where a table program has been submitted to.
  */
 public class ProgramTargetDescriptor {
 
-	private final JobID jobId;
-	private JobClient jobClient;
-
-	public ProgramTargetDescriptor(JobID jobId) {
-		this.jobId = checkNotNull(jobId);
-	}
+	private final JobClient jobClient;
 
 	public ProgramTargetDescriptor(JobClient jobClient) {
-		this.jobId = checkNotNull(jobClient.getJobID());
 		this.jobClient = jobClient;
 	}
 
 	public JobID getJobId() {
-		return jobId;
+		return jobClient.getJobID();
 	}
 
 	public JobClient getJobClient() {
@@ -56,19 +48,15 @@ public class ProgramTargetDescriptor {
 
 	@Override
 	public String toString() {
-		return String.format("Job ID: %s\n", jobId);
+		return String.format("Job ID: %s\n", getJobId());
 	}
 
 	/**
 	 * Creates a program target description from deployment classes.
 	 *
-	 * @param jobId job id
+	 * @param jobClient job client
 	 * @return program target descriptor
 	 */
-	public static ProgramTargetDescriptor of(JobID jobId) {
-		return new ProgramTargetDescriptor(jobId);
-	}
-
 	public static ProgramTargetDescriptor of(JobClient jobClient) {
 		return new ProgramTargetDescriptor(jobClient);
 	}
