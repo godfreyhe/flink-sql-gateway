@@ -26,6 +26,7 @@ import com.ververica.flink.table.rest.result.ConstantNames;
 import com.ververica.flink.table.rest.result.ResultSet;
 
 import org.apache.flink.api.common.JobStatus;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.table.types.logical.BigIntType;
 import org.apache.flink.table.types.logical.VarCharType;
 import org.apache.flink.types.Row;
@@ -48,6 +49,8 @@ public class InsertOperation extends AbstractJobOperation {
 	private final String sessionId;
 	private final Executor executor;
 
+	private final List<ColumnInfo> columnInfos;
+
 	private ProgramTargetDescriptor programTargetDescriptor;
 
 	private boolean fetched = false;
@@ -56,6 +59,9 @@ public class InsertOperation extends AbstractJobOperation {
 		this.statement = statement;
 		this.sessionId = sessionId;
 		this.executor = executor;
+
+		this.columnInfos = new ArrayList<>();
+		this.columnInfos.add(ColumnInfo.create(ConstantNames.AFFECTED_ROW_COUNT, new BigIntType(false)));
 	}
 
 	@Override
@@ -70,24 +76,26 @@ public class InsertOperation extends AbstractJobOperation {
 	}
 
 	@Override
-	protected Optional<ResultSet> fetchNewJobResultSet() throws SqlGatewayException {
+	protected Optional<Tuple2<List<Row>, List<Boolean>>> fetchNewJobResults() throws SqlGatewayException {
 		if (fetched) {
 			return Optional.empty();
 		} else {
-			List<ColumnInfo> columnInfos = new ArrayList<>();
-			columnInfos.add(ColumnInfo.create(ConstantNames.AFFECTED_ROW_COUNT, new BigIntType(false)));
-
 			JobStatus jobStatus = getJobStatus();
 			if (jobStatus.isGloballyTerminalState()) {
 				// TODO get affected_row_count for batch job
 				fetched = true;
-				return Optional.of(new ResultSet(columnInfos, Collections.singletonList(
-					Row.of((long) Statement.SUCCESS_NO_INFO))));
+				return Optional.of(Tuple2.of(Collections.singletonList(
+					Row.of((long) Statement.SUCCESS_NO_INFO)), null));
 			} else {
 				// TODO throws exception if the job fails
-				return Optional.of(new ResultSet(columnInfos, Collections.emptyList()));
+				return Optional.of(Tuple2.of(Collections.emptyList(), null));
 			}
 		}
+	}
+
+	@Override
+	protected List<ColumnInfo> getColumnInfos() {
+		return columnInfos;
 	}
 
 	@Override

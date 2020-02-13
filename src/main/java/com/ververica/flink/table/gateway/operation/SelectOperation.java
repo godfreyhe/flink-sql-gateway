@@ -129,12 +129,12 @@ public class SelectOperation extends AbstractJobOperation {
 	}
 
 	@Override
-	protected Optional<ResultSet> fetchNewJobResultSet() throws SqlGatewayException {
+	protected Optional<Tuple2<List<Row>, List<Boolean>>> fetchNewJobResults() throws SqlGatewayException {
 		if (resultDescriptor == null) {
 			throw new SqlGatewayException("The job for this query has been canceled.");
 		}
 
-		Optional<ResultSet> ret;
+		Optional<Tuple2<List<Row>, List<Boolean>>> ret;
 		synchronized (lock) {
 			if (resultDescriptor == null) {
 				throw new SqlGatewayException("The job for this query has been canceled.");
@@ -150,14 +150,19 @@ public class SelectOperation extends AbstractJobOperation {
 		return ret;
 	}
 
-	private Optional<ResultSet> fetchBatchResult() {
+	@Override
+	protected List<ColumnInfo> getColumnInfos() {
+		return columnInfos;
+	}
+
+	private Optional<Tuple2<List<Row>, List<Boolean>>> fetchBatchResult() {
 		String resultId = resultDescriptor.getResultId();
 		TypedResult<Integer> typedResult = executor.snapshotResult(sessionId, resultId, Integer.MAX_VALUE);
 		if (typedResult.getType() == TypedResult.ResultType.EOS) {
 			if (resultFetched) {
 				return Optional.empty();
 			} else {
-				return Optional.of(new ResultSet(columnInfos, new ArrayList<>(), null));
+				return Optional.of(Tuple2.of(Collections.emptyList(), null));
 			}
 		} else if (typedResult.getType() == TypedResult.ResultType.PAYLOAD) {
 			Integer payload = typedResult.getPayload();
@@ -165,13 +170,13 @@ public class SelectOperation extends AbstractJobOperation {
 			for (int i = 1; i <= payload; i++) {
 				data.addAll(executor.retrieveResultPage(resultId, i));
 			}
-			return Optional.of(new ResultSet(columnInfos, data, null));
+			return Optional.of(Tuple2.of(data, null));
 		} else {
-			return Optional.of(new ResultSet(columnInfos, new ArrayList<>(), null));
+			return Optional.of(Tuple2.of(Collections.emptyList(), null));
 		}
 	}
 
-	private Optional<ResultSet> fetchStreamingResult() {
+	private Optional<Tuple2<List<Row>, List<Boolean>>> fetchStreamingResult() {
 		TypedResult<List<Tuple2<Boolean, Row>>> typedResult = executor.retrieveResultChanges(
 			sessionId, resultDescriptor.getResultId());
 		if (typedResult.getType() == TypedResult.ResultType.EOS) {
@@ -182,7 +187,7 @@ public class SelectOperation extends AbstractJobOperation {
 			if (resultFetched) {
 				return Optional.empty();
 			} else {
-				return Optional.of(new ResultSet(columnInfos, new ArrayList<>(), new ArrayList<>()));
+				return Optional.of(Tuple2.of(Collections.emptyList(), Collections.emptyList()));
 			}
 		} else if (typedResult.getType() == TypedResult.ResultType.PAYLOAD) {
 			List<Tuple2<Boolean, Row>> payload = typedResult.getPayload();
@@ -192,9 +197,9 @@ public class SelectOperation extends AbstractJobOperation {
 				data.add(tuple.f1);
 				changeFlags.add(tuple.f0);
 			}
-			return Optional.of(new ResultSet(columnInfos, data, changeFlags));
+			return Optional.of(Tuple2.of(data, changeFlags));
 		} else {
-			return Optional.of(new ResultSet(columnInfos, new ArrayList<>(), new ArrayList<>()));
+			return Optional.of(Tuple2.of(Collections.emptyList(), Collections.emptyList()));
 		}
 	}
 

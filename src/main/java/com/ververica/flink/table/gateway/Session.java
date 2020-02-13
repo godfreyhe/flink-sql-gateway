@@ -102,8 +102,8 @@ public class Session {
 		jobOperations.remove(jobId);
 	}
 
-	public Optional<ResultSet> getJobResult(JobID jobId, long token) throws SqlGatewayException {
-		return getJobOperation(jobId).getJobResult(token);
+	public Optional<ResultSet> getJobResult(JobID jobId, long token, int fetchSize) throws SqlGatewayException {
+		return getJobOperation(jobId).getJobResult(token, fetchSize);
 	}
 
 	private JobOperation getJobOperation(JobID jobId) throws SqlGatewayException {

@@ -29,7 +29,7 @@ import javax.annotation.Nullable;
 import java.util.Map;
 
 /**
- * ResponseBody for session create.
+ * {@link RequestBody} for session create.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SessionCreateRequestBody implements RequestBody {

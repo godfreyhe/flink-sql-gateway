@@ -19,10 +19,18 @@
 package com.ververica.flink.table.gateway.operation;
 
 import com.ververica.flink.table.gateway.SqlGatewayException;
+import com.ververica.flink.table.rest.result.ColumnInfo;
 import com.ververica.flink.table.rest.result.ResultSet;
 
 import org.apache.flink.api.common.JobID;
+import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.types.Row;
 
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -33,12 +41,22 @@ public abstract class AbstractJobOperation implements JobOperation {
 	protected volatile JobID jobId;
 
 	private long currentToken;
-	private ResultSet previousResultSet;
+	private int previousFetchSize;
+	private int previousResultSetSize;
+	private LinkedList<Row> bufferedResults;
+	@Nullable
+	private LinkedList<Boolean> bufferedChangeFlags;
+	private boolean noMoreResults;
 
 	protected final Object lock = new Object();
 
 	public AbstractJobOperation() {
 		this.currentToken = 0;
+		this.previousFetchSize = 0;
+		this.previousResultSetSize = 0;
+		this.bufferedResults = new LinkedList<>();
+		this.bufferedChangeFlags = null;
+		this.noMoreResults = false;
 	}
 
 	@Override
@@ -50,21 +68,76 @@ public abstract class AbstractJobOperation implements JobOperation {
 	}
 
 	@Override
-	public Optional<ResultSet> getJobResult(long token) throws SqlGatewayException {
+	public synchronized Optional<ResultSet> getJobResult(long token, int fetchSize) throws SqlGatewayException {
 		if (token == currentToken) {
-			Optional<ResultSet> currentResultSet = fetchNewJobResultSet();
-			if (currentResultSet.isPresent()) {
-				previousResultSet = currentResultSet.get();
+			if (noMoreResults) {
+				return Optional.empty();
+			}
+
+			// a new token arrives, remove used results
+			for (int i = 0; i < previousResultSetSize; i++) {
+				bufferedResults.removeFirst();
+				if (bufferedChangeFlags != null) {
+					bufferedChangeFlags.removeFirst();
+				}
+			}
+
+			if (bufferedResults.isEmpty()) {
+				// buffered results have been totally consumed,
+				// so try to fetch new results
+				Optional<Tuple2<List<Row>, List<Boolean>>> newResults = fetchNewJobResults();
+				if (newResults.isPresent()) {
+					bufferedResults.addAll(newResults.get().f0);
+					if (newResults.get().f1 != null) {
+						if (bufferedChangeFlags == null) {
+							bufferedChangeFlags = new LinkedList<>();
+						}
+						bufferedChangeFlags.addAll(newResults.get().f1);
+					}
+					currentToken++;
+				} else {
+					noMoreResults = true;
+					return Optional.empty();
+				}
+			} else {
+				// buffered results haven't been totally consumed
 				currentToken++;
 			}
-			return currentResultSet;
+
+			previousFetchSize = fetchSize;
+			if (fetchSize > 0) {
+				previousResultSetSize = Math.min(bufferedResults.size(), fetchSize);
+			} else {
+				previousResultSetSize = bufferedResults.size();
+			}
 		} else if (token == currentToken - 1 && token >= 0) {
-			return Optional.of(previousResultSet);
+			if (previousFetchSize != fetchSize) {
+				throw new SqlGatewayException("As the same token is provided, fetch size must be the same.");
+			}
 		} else {
 			throw new SqlGatewayException(
 				"Expecting token to be " + currentToken + " or " + (currentToken - 1) + ", but found " + token + ".");
 		}
+
+		return Optional.of(new ResultSet(
+			getColumnInfos(),
+			getLinkedListElementsFromBegin(bufferedResults, previousResultSetSize),
+			getLinkedListElementsFromBegin(bufferedChangeFlags, previousResultSetSize)));
 	}
 
-	protected abstract Optional<ResultSet> fetchNewJobResultSet() throws SqlGatewayException;
+	protected abstract Optional<Tuple2<List<Row>, List<Boolean>>> fetchNewJobResults() throws SqlGatewayException;
+
+	protected abstract List<ColumnInfo> getColumnInfos();
+
+	private <T> List<T> getLinkedListElementsFromBegin(LinkedList<T> linkedList, int size) {
+		if (linkedList == null) {
+			return null;
+		}
+		List<T> ret = new ArrayList<>();
+		Iterator<T> iter = linkedList.iterator();
+		for (int i = 0; i < size; i++) {
+			ret.add(iter.next());
+		}
+		return ret;
+	}
 }

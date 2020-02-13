@@ -33,7 +33,7 @@ public interface JobOperation extends Operation {
 
 	JobID getJobId();
 
-	Optional<ResultSet> getJobResult(long token) throws SqlGatewayException;
+	Optional<ResultSet> getJobResult(long token, int fetchSize) throws SqlGatewayException;
 
 	JobStatus getJobStatus() throws SqlGatewayException;
 

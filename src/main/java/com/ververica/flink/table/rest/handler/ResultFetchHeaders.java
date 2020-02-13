@@ -20,13 +20,13 @@ package com.ververica.flink.table.rest.handler;
 
 import com.ververica.flink.table.rest.message.JobIdPathParameter;
 import com.ververica.flink.table.rest.message.ResultFetchMessageParameters;
+import com.ververica.flink.table.rest.message.ResultFetchRequestBody;
 import com.ververica.flink.table.rest.message.ResultFetchResponseBody;
 import com.ververica.flink.table.rest.message.ResultTokenPathParameter;
 import com.ververica.flink.table.rest.message.SessionIdPathParameter;
 
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.runtime.rest.HttpMethodWrapper;
-import org.apache.flink.runtime.rest.messages.EmptyRequestBody;
 import org.apache.flink.runtime.rest.messages.MessageHeaders;
 import org.apache.flink.runtime.rest.versioning.RestAPIVersion;
 
@@ -36,7 +36,7 @@ import org.apache.flink.shaded.netty4.io.netty.handler.codec.http.HttpResponseSt
  * Headers for result fetch.
  */
 public class ResultFetchHeaders implements MessageHeaders<
-	EmptyRequestBody, ResultFetchResponseBody, ResultFetchMessageParameters> {
+	ResultFetchRequestBody, ResultFetchResponseBody, ResultFetchMessageParameters> {
 
 	private static final ResultFetchHeaders INSTANCE = new ResultFetchHeaders();
 
@@ -68,8 +68,8 @@ public class ResultFetchHeaders implements MessageHeaders<
 	}
 
 	@Override
-	public Class<EmptyRequestBody> getRequestClass() {
-		return EmptyRequestBody.class;
+	public Class<ResultFetchRequestBody> getRequestClass() {
+		return ResultFetchRequestBody.class;
 	}
 
 	@Override

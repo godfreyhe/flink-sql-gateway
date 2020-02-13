@@ -28,6 +28,7 @@ import com.ververica.flink.table.rest.handler.StatementCompleteHeaders;
 import com.ververica.flink.table.rest.handler.StatementExecuteHeaders;
 import com.ververica.flink.table.rest.message.GetInfoResponseBody;
 import com.ververica.flink.table.rest.message.ResultFetchMessageParameters;
+import com.ververica.flink.table.rest.message.ResultFetchRequestBody;
 import com.ververica.flink.table.rest.message.ResultFetchResponseBody;
 import com.ververica.flink.table.rest.message.SessionCreateRequestBody;
 import com.ververica.flink.table.rest.message.SessionJobMessageParameters;
@@ -212,6 +213,11 @@ public class SessionClient {
 	}
 
 	public synchronized ResultFetchResponseBody fetchResult(JobID jobId, long token) throws SqlRestException {
+		return fetchResult(jobId, token, null);
+	}
+
+	public synchronized ResultFetchResponseBody fetchResult(
+			JobID jobId, long token, Integer fetchSize) throws SqlRestException {
 		checkState();
 		try {
 			return restClient.sendRequest(
@@ -219,7 +225,7 @@ public class SessionClient {
 				serverPort,
 				ResultFetchHeaders.getInstance(),
 				new ResultFetchMessageParameters(sessionId, jobId, token),
-				EmptyRequestBody.getInstance())
+				new ResultFetchRequestBody(fetchSize))
 				.get();
 		} catch (Exception e) {
 			throw new SqlRestException("Failed to fetch result", e.getCause());

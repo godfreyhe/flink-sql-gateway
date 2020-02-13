@@ -22,6 +22,7 @@ import com.ververica.flink.table.gateway.SessionManager;
 import com.ververica.flink.table.gateway.SqlGatewayException;
 import com.ververica.flink.table.rest.message.JobIdPathParameter;
 import com.ververica.flink.table.rest.message.ResultFetchMessageParameters;
+import com.ververica.flink.table.rest.message.ResultFetchRequestBody;
 import com.ververica.flink.table.rest.message.ResultFetchResponseBody;
 import com.ververica.flink.table.rest.message.ResultTokenPathParameter;
 import com.ververica.flink.table.rest.message.SessionIdPathParameter;
@@ -31,7 +32,6 @@ import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.time.Time;
 import org.apache.flink.runtime.rest.handler.HandlerRequest;
 import org.apache.flink.runtime.rest.handler.RestHandlerException;
-import org.apache.flink.runtime.rest.messages.EmptyRequestBody;
 import org.apache.flink.runtime.rest.messages.MessageHeaders;
 import org.apache.flink.runtime.rest.versioning.RestAPIVersion;
 
@@ -49,7 +49,7 @@ import java.util.concurrent.CompletableFuture;
  * Handler for result fetch.
  */
 public class ResultFetchHandler extends AbstractRestHandler<
-	EmptyRequestBody, ResultFetchResponseBody, ResultFetchMessageParameters> {
+	ResultFetchRequestBody, ResultFetchResponseBody, ResultFetchMessageParameters> {
 
 	private final SessionManager sessionManager;
 
@@ -57,7 +57,7 @@ public class ResultFetchHandler extends AbstractRestHandler<
 		SessionManager sessionManager,
 		Time timeout,
 		Map<String, String> responseHeaders,
-		MessageHeaders<EmptyRequestBody, ResultFetchResponseBody, ResultFetchMessageParameters> messageHeaders) {
+		MessageHeaders<ResultFetchRequestBody, ResultFetchResponseBody, ResultFetchMessageParameters> messageHeaders) {
 
 		super(timeout, responseHeaders, messageHeaders);
 		this.sessionManager = sessionManager;
@@ -65,15 +65,21 @@ public class ResultFetchHandler extends AbstractRestHandler<
 
 	@Override
 	protected CompletableFuture<ResultFetchResponseBody> handleRequest(
-		@Nonnull HandlerRequest<EmptyRequestBody, ResultFetchMessageParameters> request)
+		@Nonnull HandlerRequest<ResultFetchRequestBody, ResultFetchMessageParameters> request)
 		throws RestHandlerException {
 
 		String sessionId = request.getPathParameter(SessionIdPathParameter.class);
 		JobID jobId = request.getPathParameter(JobIdPathParameter.class);
 		Long resultToken = request.getPathParameter(ResultTokenPathParameter.class);
+		Integer fetchSize = request.getRequestBody().getFetchSize();
+
+		if (fetchSize != null && fetchSize <= 0) {
+			throw new RestHandlerException("Fetch size must be positive.", HttpResponseStatus.BAD_REQUEST);
+		}
 
 		try {
-			Optional<ResultSet> resultSet = sessionManager.getSession(sessionId).getJobResult(jobId, resultToken);
+			Optional<ResultSet> resultSet = sessionManager.getSession(sessionId).getJobResult(
+				jobId, resultToken, fetchSize == null ? 0 : fetchSize);
 			List<ResultSet> results = null;
 			if (resultSet.isPresent()) {
 				results = Collections.singletonList(resultSet.get());

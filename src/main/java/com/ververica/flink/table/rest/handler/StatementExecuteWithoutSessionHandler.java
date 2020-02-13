@@ -141,7 +141,7 @@ public class StatementExecuteWithoutSessionHandler extends AbstractRestHandler<
 		long token = 0;
 
 		while (true) {
-			Optional<ResultSet> resultSet = sessionManager.getSession(sessionId).getJobResult(jobId, token);
+			Optional<ResultSet> resultSet = sessionManager.getSession(sessionId).getJobResult(jobId, token, 0);
 			if (resultSet.isPresent()) {
 				if (resultSet.get().getData().isEmpty()) {
 					if (results.isEmpty()) {
