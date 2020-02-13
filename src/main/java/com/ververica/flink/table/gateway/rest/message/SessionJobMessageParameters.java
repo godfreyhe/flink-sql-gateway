@@ -28,7 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * MessageParameters for session id and operation id.
+ * {@link MessageParameters} for session id and job id.
  */
 public class SessionJobMessageParameters extends MessageParameters {
 

@@ -20,14 +20,13 @@ package com.ververica.flink.table.gateway.rest.message;
 
 import org.apache.flink.runtime.rest.messages.RequestBody;
 
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonInclude;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.annotation.Nullable;
 
 /**
- * {@link RequestBody} for result fetching.
+ * {@link RequestBody} for fetching job result.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ResultFetchRequestBody implements RequestBody {
@@ -39,12 +38,11 @@ public class ResultFetchRequestBody implements RequestBody {
 	private final Integer fetchSize;
 
 	public ResultFetchRequestBody(
-		@JsonProperty(FIELD_NAME_FETCH_SIZE) @Nullable Integer fetchSize) {
+		@Nullable @JsonProperty(FIELD_NAME_FETCH_SIZE) Integer fetchSize) {
 		this.fetchSize = fetchSize;
 	}
 
 	@Nullable
-	@JsonIgnore
 	public Integer getFetchSize() {
 		return fetchSize;
 	}

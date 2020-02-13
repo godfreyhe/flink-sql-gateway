@@ -24,7 +24,7 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonInc
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * ResponseBody for getting info.
+ * {@link ResponseBody} for getting info.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class GetInfoResponseBody implements ResponseBody {

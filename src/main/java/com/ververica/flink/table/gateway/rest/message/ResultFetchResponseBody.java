@@ -22,7 +22,6 @@ import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
 import org.apache.flink.runtime.rest.messages.ResponseBody;
 
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonInclude;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -31,15 +30,15 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 /**
- * ResponseBody for result fetch.
+ * {@link ResponseBody} for fetching job result.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ResultFetchResponseBody implements ResponseBody {
 
-	private static final String FIELD_NAME_RESULT = "results";
+	private static final String FIELD_NAME_RESULTS = "results";
 	private static final String FIELD_NAME_NEXT_RESULT_URI = "next_result_uri";
 
-	@JsonProperty(FIELD_NAME_RESULT)
+	@JsonProperty(FIELD_NAME_RESULTS)
 	@Nullable
 	private List<ResultSet> results;
 
@@ -48,20 +47,18 @@ public class ResultFetchResponseBody implements ResponseBody {
 	private String nextResultUri;
 
 	public ResultFetchResponseBody(
-		@JsonProperty(FIELD_NAME_RESULT) @Nullable List<ResultSet> results,
-		@JsonProperty(FIELD_NAME_NEXT_RESULT_URI) @Nullable String nextResultUri) {
+		@Nullable @JsonProperty(FIELD_NAME_RESULTS) List<ResultSet> results,
+		@Nullable @JsonProperty(FIELD_NAME_NEXT_RESULT_URI) String nextResultUri) {
 		this.results = results;
 		this.nextResultUri = nextResultUri;
 	}
 
 	@Nullable
-	@JsonIgnore
 	public List<ResultSet> getResults() {
 		return results;
 	}
 
 	@Nullable
-	@JsonIgnore
 	public String getNextResultUri() {
 		return nextResultUri;
 	}

@@ -46,10 +46,10 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Handler for result fetch.
+ * Request handler for fetching job result.
  */
-public class ResultFetchHandler extends AbstractRestHandler<
-	ResultFetchRequestBody, ResultFetchResponseBody, ResultFetchMessageParameters> {
+public class ResultFetchHandler
+	extends AbstractRestHandler<ResultFetchRequestBody, ResultFetchResponseBody, ResultFetchMessageParameters> {
 
 	private final SessionManager sessionManager;
 
@@ -85,8 +85,7 @@ public class ResultFetchHandler extends AbstractRestHandler<
 				results = Collections.singletonList(resultSet.get());
 			}
 
-			// TODO request.getRestApiVersion()
-			RestAPIVersion version = RestAPIVersion.V1;
+			RestAPIVersion version = getCurrentVersion();
 			String nextResultUri = null;
 			if (resultSet.isPresent()) {
 				nextResultUri = ResultFetchHeaders.buildNextResultUri(version, sessionId, jobId, resultToken + 1);

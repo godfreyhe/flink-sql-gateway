@@ -24,7 +24,7 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonInc
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * ResponseBody for operation close.
+ * {@link ResponseBody} for closing a session.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SessionCloseResponseBody implements ResponseBody {
@@ -34,8 +34,7 @@ public class SessionCloseResponseBody implements ResponseBody {
 	@JsonProperty(FIELD_NAME_STATUS)
 	private String status;
 
-	public SessionCloseResponseBody(
-		@JsonProperty(FIELD_NAME_STATUS) String status) {
+	public SessionCloseResponseBody(@JsonProperty(FIELD_NAME_STATUS) String status) {
 		this.status = status;
 	}
 

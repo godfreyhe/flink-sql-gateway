@@ -20,7 +20,6 @@ package com.ververica.flink.table.gateway.rest.message;
 
 import org.apache.flink.runtime.rest.messages.RequestBody;
 
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonInclude;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -29,7 +28,7 @@ import javax.annotation.Nullable;
 import java.util.Map;
 
 /**
- * {@link RequestBody} for session create.
+ * {@link RequestBody} for creating a session.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SessionCreateRequestBody implements RequestBody {
@@ -56,10 +55,10 @@ public class SessionCreateRequestBody implements RequestBody {
 	private final Map<String, String> properties;
 
 	public SessionCreateRequestBody(
-		@JsonProperty(FIELD_NAME_SESSION_NAME) @Nullable String sessionName,
-		@JsonProperty(FIELD_NAME_PLANNER) @Nullable String planner,
-		@JsonProperty(FIELD_NAME_EXECUTION_TYPE) @Nullable String executionType,
-		@JsonProperty(FIELD_NAME_PROPERTIES) @Nullable Map<String, String> properties) {
+		@Nullable @JsonProperty(FIELD_NAME_SESSION_NAME) String sessionName,
+		@Nullable @JsonProperty(FIELD_NAME_PLANNER) String planner,
+		@Nullable @JsonProperty(FIELD_NAME_EXECUTION_TYPE) String executionType,
+		@Nullable @JsonProperty(FIELD_NAME_PROPERTIES) Map<String, String> properties) {
 		this.sessionName = sessionName;
 		this.planner = planner;
 		this.executionType = executionType;
@@ -67,25 +66,21 @@ public class SessionCreateRequestBody implements RequestBody {
 	}
 
 	@Nullable
-	@JsonIgnore
 	public String getSessionName() {
 		return sessionName;
 	}
 
 	@Nullable
-	@JsonIgnore
 	public String getPlanner() {
 		return planner;
 	}
 
 	@Nullable
-	@JsonIgnore
 	public String getExecutionType() {
 		return executionType;
 	}
 
 	@Nullable
-	@JsonIgnore
 	public Map<String, String> getProperties() {
 		return properties;
 	}

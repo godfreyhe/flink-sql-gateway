@@ -26,7 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * MessageParameters for session id.
+ * {@link MessageParameters} for session id.
  */
 public class SessionMessageParameters extends MessageParameters {
 

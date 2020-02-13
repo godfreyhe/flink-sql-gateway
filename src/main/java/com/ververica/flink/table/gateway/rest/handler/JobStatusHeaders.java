@@ -23,19 +23,17 @@ import com.ververica.flink.table.gateway.rest.message.JobStatusResponseBody;
 import com.ververica.flink.table.gateway.rest.message.SessionIdPathParameter;
 import com.ververica.flink.table.gateway.rest.message.SessionJobMessageParameters;
 
-import org.apache.flink.api.common.JobID;
 import org.apache.flink.runtime.rest.HttpMethodWrapper;
 import org.apache.flink.runtime.rest.messages.EmptyRequestBody;
 import org.apache.flink.runtime.rest.messages.MessageHeaders;
-import org.apache.flink.runtime.rest.versioning.RestAPIVersion;
 
 import org.apache.flink.shaded.netty4.io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
- * Headers for getting job status.
+ * Messages headers for getting job status.
  */
-public class JobStatusHeaders implements MessageHeaders<
-	EmptyRequestBody, JobStatusResponseBody, SessionJobMessageParameters> {
+public class JobStatusHeaders
+	implements MessageHeaders<EmptyRequestBody, JobStatusResponseBody, SessionJobMessageParameters> {
 
 	private static final JobStatusHeaders INSTANCE = new JobStatusHeaders();
 
@@ -82,12 +80,6 @@ public class JobStatusHeaders implements MessageHeaders<
 
 	public static JobStatusHeaders getInstance() {
 		return INSTANCE;
-	}
-
-	public static String buildJobStatusUri(RestAPIVersion version, String sessionId, JobID jobId) {
-		return "/" + version.getURLVersionPrefix() + URL
-			.replace(":" + SessionIdPathParameter.KEY, sessionId)
-			.replace(":" + JobIdPathParameter.KEY, jobId.toHexString());
 	}
 
 }

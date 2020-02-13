@@ -93,6 +93,7 @@ public abstract class AbstractHandler<R extends RequestBody, M extends MessagePa
 
 	private final UntypedResponseMessageHeaders<R, M> untypedResponseMessageHeaders;
 
+	private RestAPIVersion currentVersion;
 	/**
 	 * Used to ensure that the handler is not closed while there are still in-flight requests.
 	 */
@@ -119,7 +120,7 @@ public abstract class AbstractHandler<R extends RequestBody, M extends MessagePa
 		if (slashIndex < 0) {
 			slashIndex = uri.length();
 		}
-		RestAPIVersion version = RestAPIVersion.fromURLVersionPrefix(uri.substring(1, slashIndex));
+		currentVersion = RestAPIVersion.fromURLVersionPrefix(uri.substring(1, slashIndex));
 
 		if (log.isTraceEnabled()) {
 			log.trace("Received request " + uri + '.');
@@ -198,7 +199,9 @@ public abstract class AbstractHandler<R extends RequestBody, M extends MessagePa
 		inFlightRequestTracker.deregisterRequest();
 	}
 
-	private CompletableFuture<Void> handleException(Throwable throwable, ChannelHandlerContext ctx,
+	private CompletableFuture<Void> handleException(
+		Throwable throwable,
+		ChannelHandlerContext ctx,
 		HttpRequest httpRequest) {
 		FlinkHttpObjectAggregator flinkHttpObjectAggregator = ctx.pipeline().get(FlinkHttpObjectAggregator.class);
 		int maxLength = flinkHttpObjectAggregator.maxContentLength() - OTHER_RESP_PAYLOAD_OVERHEAD;
@@ -238,6 +241,13 @@ public abstract class AbstractHandler<R extends RequestBody, M extends MessagePa
 
 	protected CompletableFuture<Void> closeHandlerAsync() {
 		return CompletableFuture.completedFuture(null);
+	}
+
+	/**
+	 * Returns the rest version defined in request uri.
+	 */
+	protected RestAPIVersion getCurrentVersion() {
+		return currentVersion;
 	}
 
 	/**

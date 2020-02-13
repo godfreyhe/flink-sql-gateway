@@ -24,42 +24,22 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonInc
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * ResponseBody for operation close.
+ * {@link ResponseBody} for canceling a Flink job.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class JobCancelResponseBody implements ResponseBody {
 
 	private static final String FIELD_NAME_STATUS = "status";
-	private static final String FIELD_NAME_SUBMIT_STATEMENT_URI = "submit_statement_uri";
-	private static final String FIELD_NAME_CLOSE_SESSION = "close_session_uri";
 
 	@JsonProperty(FIELD_NAME_STATUS)
 	private String status;
 
-	@JsonProperty(FIELD_NAME_SUBMIT_STATEMENT_URI)
-	private final String submitStatementUri;
-
-	@JsonProperty(FIELD_NAME_CLOSE_SESSION)
-	private final String closeSessionUri;
-
-	public JobCancelResponseBody(
-		@JsonProperty(FIELD_NAME_STATUS) String status,
-		@JsonProperty(FIELD_NAME_SUBMIT_STATEMENT_URI) String submitStatementUri,
-		@JsonProperty(FIELD_NAME_CLOSE_SESSION) String closeSessionUri) {
+	public JobCancelResponseBody(@JsonProperty(FIELD_NAME_STATUS) String status) {
 		this.status = status;
-		this.submitStatementUri = submitStatementUri;
-		this.closeSessionUri = closeSessionUri;
 	}
 
 	public String getStatus() {
 		return status;
 	}
 
-	public String getSubmitStatementUri() {
-		return submitStatementUri;
-	}
-
-	public String getCloseSessionUri() {
-		return closeSessionUri;
-	}
 }

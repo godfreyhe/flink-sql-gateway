@@ -28,7 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * MessageParameters for result fetch.
+ * {@link MessageParameters} for fetching job result.
  */
 public class ResultFetchMessageParameters extends MessageParameters {
 

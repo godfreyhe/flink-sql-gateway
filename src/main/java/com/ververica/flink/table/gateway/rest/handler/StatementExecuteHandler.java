@@ -42,10 +42,10 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Handler for statement execute.
+ * Request handler for executing a statement.
  */
-public class StatementExecuteHandler extends AbstractRestHandler<
-	StatementExecuteRequestBody, StatementExecuteResponseBody, SessionMessageParameters> {
+public class StatementExecuteHandler
+	extends AbstractRestHandler<StatementExecuteRequestBody, StatementExecuteResponseBody, SessionMessageParameters> {
 
 	private final SessionManager sessionManager;
 
@@ -80,12 +80,13 @@ public class StatementExecuteHandler extends AbstractRestHandler<
 		try {
 			Tuple2<ResultSet, SqlCommand> tuple2 = sessionManager.getSession(sessionId).runStatement(statement);
 			ResultSet resultSet = tuple2.f0;
-			SqlCommand command = tuple2.f1;
-			String statementType = command.name();
+			String statementType = tuple2.f1.name();
 
-			return CompletableFuture.completedFuture(new StatementExecuteResponseBody(
-				Collections.singletonList(resultSet),
-				Collections.singletonList(statementType)));
+			return CompletableFuture.completedFuture(
+				new StatementExecuteResponseBody(
+					Collections.singletonList(resultSet),
+					Collections.singletonList(statementType))
+			);
 		} catch (SqlGatewayException e) {
 			throw new RestHandlerException(e.getMessage(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
 		}

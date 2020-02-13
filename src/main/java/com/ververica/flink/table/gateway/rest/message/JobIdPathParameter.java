@@ -23,7 +23,7 @@ import org.apache.flink.runtime.rest.messages.ConversionException;
 import org.apache.flink.runtime.rest.messages.MessagePathParameter;
 
 /**
- * MessagePathParameter for job id.
+ * {@link MessagePathParameter} for job id.
  */
 public class JobIdPathParameter extends MessagePathParameter<JobID> {
 
@@ -49,6 +49,6 @@ public class JobIdPathParameter extends MessagePathParameter<JobID> {
 
 	@Override
 	public String getDescription() {
-		return "A string that identifies an operation.";
+		return "A string that identifies a job.";
 	}
 }

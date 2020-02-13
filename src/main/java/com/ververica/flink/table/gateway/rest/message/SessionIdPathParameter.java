@@ -24,7 +24,7 @@ import org.apache.flink.runtime.rest.messages.ConversionException;
 import org.apache.flink.runtime.rest.messages.MessagePathParameter;
 
 /**
- * MessagePathParameter for session id.
+ * {@link MessagePathParameter} for session id.
  */
 public class SessionIdPathParameter extends MessagePathParameter<String> {
 

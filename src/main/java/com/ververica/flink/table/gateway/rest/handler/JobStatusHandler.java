@@ -41,10 +41,10 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * get job status operation.
+ * Request handler for getting job status.
  */
-public class JobStatusHandler extends AbstractRestHandler<
-	EmptyRequestBody, JobStatusResponseBody, SessionJobMessageParameters> {
+public class JobStatusHandler
+	extends AbstractRestHandler<EmptyRequestBody, JobStatusResponseBody, SessionJobMessageParameters> {
 
 	private final SessionManager sessionManager;
 
@@ -63,8 +63,7 @@ public class JobStatusHandler extends AbstractRestHandler<
 
 	@Override
 	protected CompletableFuture<JobStatusResponseBody> handleRequest(
-		@Nonnull HandlerRequest<EmptyRequestBody, SessionJobMessageParameters> request)
-		throws RestHandlerException {
+		@Nonnull HandlerRequest<EmptyRequestBody, SessionJobMessageParameters> request) throws RestHandlerException {
 
 		String sessionId = request.getPathParameter(SessionIdPathParameter.class);
 		JobID jobId = request.getPathParameter(JobIdPathParameter.class);

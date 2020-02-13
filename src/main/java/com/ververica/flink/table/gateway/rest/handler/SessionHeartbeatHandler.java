@@ -38,10 +38,10 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Handler for session heartbeat.
+ * Request handler for triggering session heartbeat.
  */
-public class SessionHeartbeatHandler extends AbstractRestHandler<
-	EmptyRequestBody, EmptyResponseBody, SessionMessageParameters> {
+public class SessionHeartbeatHandler
+	extends AbstractRestHandler<EmptyRequestBody, EmptyResponseBody, SessionMessageParameters> {
 
 	private SessionManager sessionManager;
 
@@ -57,8 +57,7 @@ public class SessionHeartbeatHandler extends AbstractRestHandler<
 
 	@Override
 	protected CompletableFuture<EmptyResponseBody> handleRequest(
-		@Nonnull HandlerRequest<EmptyRequestBody, SessionMessageParameters> request)
-		throws RestHandlerException {
+		@Nonnull HandlerRequest<EmptyRequestBody, SessionMessageParameters> request) throws RestHandlerException {
 
 		String sessionId = request.getPathParameter(SessionIdPathParameter.class);
 		try {

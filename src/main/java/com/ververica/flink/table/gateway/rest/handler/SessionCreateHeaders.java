@@ -28,10 +28,10 @@ import org.apache.flink.runtime.rest.messages.MessageHeaders;
 import org.apache.flink.shaded.netty4.io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
- * Headers for session create.
+ * Message headers for creating a session.
  */
-public class SessionCreateHeaders implements MessageHeaders<
-	SessionCreateRequestBody, SessionCreateResponseBody, EmptyMessageParameters> {
+public class SessionCreateHeaders
+	implements MessageHeaders<SessionCreateRequestBody, SessionCreateResponseBody, EmptyMessageParameters> {
 
 	private static final SessionCreateHeaders INSTANCE = new SessionCreateHeaders();
 

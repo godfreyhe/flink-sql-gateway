@@ -29,7 +29,6 @@ import org.apache.flink.runtime.rest.handler.HandlerRequest;
 import org.apache.flink.runtime.rest.handler.RestHandlerException;
 import org.apache.flink.runtime.rest.messages.EmptyMessageParameters;
 import org.apache.flink.runtime.rest.messages.MessageHeaders;
-import org.apache.flink.runtime.rest.versioning.RestAPIVersion;
 
 import org.apache.flink.shaded.netty4.io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -42,10 +41,10 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Handler for session create.
+ * Request handler for creating a session.
  */
-public class SessionCreateHandler extends AbstractRestHandler<
-	SessionCreateRequestBody, SessionCreateResponseBody, EmptyMessageParameters> {
+public class SessionCreateHandler
+	extends AbstractRestHandler<SessionCreateRequestBody, SessionCreateResponseBody, EmptyMessageParameters> {
 
 	private static final List<String> AVAILABLE_PLANNERS = Arrays.asList(
 		ExecutionEntry.EXECUTION_PLANNER_VALUE_OLD,
@@ -69,8 +68,7 @@ public class SessionCreateHandler extends AbstractRestHandler<
 
 	@Override
 	protected CompletableFuture<SessionCreateResponseBody> handleRequest(
-		@Nonnull HandlerRequest<SessionCreateRequestBody, EmptyMessageParameters> request)
-		throws RestHandlerException {
+		@Nonnull HandlerRequest<SessionCreateRequestBody, EmptyMessageParameters> request) throws RestHandlerException {
 
 		String sessionName = request.getRequestBody().getSessionName();
 
@@ -104,12 +102,6 @@ public class SessionCreateHandler extends AbstractRestHandler<
 			throw new RestHandlerException(e.getMessage(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
 		}
 
-		// TODO request.getRestApiVersion()
-		RestAPIVersion version = RestAPIVersion.V1;
-		String submitStatementUri = StatementExecuteHeaders.buildStatementSubmitUri(version, sessionId);
-		String closeSessionUri = SessionCloseHeaders.buildCloseSessionUri(version, sessionId);
-
-		return CompletableFuture.completedFuture(
-			new SessionCreateResponseBody(sessionId, submitStatementUri, closeSessionUri));
+		return CompletableFuture.completedFuture(new SessionCreateResponseBody(sessionId));
 	}
 }

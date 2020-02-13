@@ -24,7 +24,7 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonInc
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * ResponseBody for operation close.
+ * {@link ResponseBody} for getting job status.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class JobStatusResponseBody implements ResponseBody {

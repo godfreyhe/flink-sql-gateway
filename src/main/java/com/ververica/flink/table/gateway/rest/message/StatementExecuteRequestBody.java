@@ -27,7 +27,7 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonPro
 import javax.annotation.Nullable;
 
 /**
- * RequestBody for statement execute.
+ * {@link RequestBody} for executing a statement.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class StatementExecuteRequestBody implements RequestBody {

@@ -28,10 +28,10 @@ import org.apache.flink.runtime.rest.messages.MessageHeaders;
 import org.apache.flink.shaded.netty4.io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
- * Headers for getting info.
+ * Message headers for getting info.
  */
-public class GetInfoHeaders implements MessageHeaders<
-	EmptyRequestBody, GetInfoResponseBody, EmptyMessageParameters> {
+public class GetInfoHeaders
+	implements MessageHeaders<EmptyRequestBody, GetInfoResponseBody, EmptyMessageParameters> {
 
 	private static final GetInfoHeaders INSTANCE = new GetInfoHeaders();
 

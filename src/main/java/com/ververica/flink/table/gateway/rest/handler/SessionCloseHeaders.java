@@ -25,15 +25,14 @@ import com.ververica.flink.table.gateway.rest.message.SessionMessageParameters;
 import org.apache.flink.runtime.rest.HttpMethodWrapper;
 import org.apache.flink.runtime.rest.messages.EmptyRequestBody;
 import org.apache.flink.runtime.rest.messages.MessageHeaders;
-import org.apache.flink.runtime.rest.versioning.RestAPIVersion;
 
 import org.apache.flink.shaded.netty4.io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
- * Headers for session close.
+ * Message headers for closing a session.
  */
-public class SessionCloseHeaders implements MessageHeaders<
-	EmptyRequestBody, SessionCloseResponseBody, SessionMessageParameters> {
+public class SessionCloseHeaders
+	implements MessageHeaders<EmptyRequestBody, SessionCloseResponseBody, SessionMessageParameters> {
 
 	private static final SessionCloseHeaders INSTANCE = new SessionCloseHeaders();
 
@@ -79,10 +78,5 @@ public class SessionCloseHeaders implements MessageHeaders<
 
 	public static SessionCloseHeaders getInstance() {
 		return INSTANCE;
-	}
-
-	public static String buildCloseSessionUri(RestAPIVersion version, String sessionId) {
-		return "/" + version.getURLVersionPrefix() +
-			URL.replace(":" + SessionIdPathParameter.KEY, sessionId);
 	}
 }

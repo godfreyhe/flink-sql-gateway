@@ -38,10 +38,10 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Handler for session close.
+ * Request handler for closing a session.
  */
-public class SessionCloseHandler extends AbstractRestHandler<
-	EmptyRequestBody, SessionCloseResponseBody, SessionMessageParameters> {
+public class SessionCloseHandler
+	extends AbstractRestHandler<EmptyRequestBody, SessionCloseResponseBody, SessionMessageParameters> {
 
 	private SessionManager sessionManager;
 
@@ -57,8 +57,7 @@ public class SessionCloseHandler extends AbstractRestHandler<
 
 	@Override
 	protected CompletableFuture<SessionCloseResponseBody> handleRequest(
-		@Nonnull HandlerRequest<EmptyRequestBody, SessionMessageParameters> request)
-		throws RestHandlerException {
+		@Nonnull HandlerRequest<EmptyRequestBody, SessionMessageParameters> request) throws RestHandlerException {
 
 		String sessionId = request.getPathParameter(SessionIdPathParameter.class);
 		try {

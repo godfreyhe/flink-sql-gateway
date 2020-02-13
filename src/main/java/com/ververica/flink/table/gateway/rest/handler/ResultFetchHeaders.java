@@ -33,10 +33,10 @@ import org.apache.flink.runtime.rest.versioning.RestAPIVersion;
 import org.apache.flink.shaded.netty4.io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
- * Headers for result fetch.
+ * Message headers for fetching job result.
  */
-public class ResultFetchHeaders implements MessageHeaders<
-	ResultFetchRequestBody, ResultFetchResponseBody, ResultFetchMessageParameters> {
+public class ResultFetchHeaders
+	implements MessageHeaders<ResultFetchRequestBody, ResultFetchResponseBody, ResultFetchMessageParameters> {
 
 	private static final ResultFetchHeaders INSTANCE = new ResultFetchHeaders();
 
@@ -60,7 +60,7 @@ public class ResultFetchHeaders implements MessageHeaders<
 	public String getDescription() {
 		return "Fetch a part of result for a submitted job. " +
 			"To fetch the next part of the result, increase token by 1 and call this API again " +
-			"or just follow the uri provided in the next_uri." +
+			"or just follow the uri provided in the next_result_uri." +
 			"If the token is the same with the previous call to this API, " +
 			"then the same part of the result will be provided again. " +
 			"Other token values are considered invalid. " +

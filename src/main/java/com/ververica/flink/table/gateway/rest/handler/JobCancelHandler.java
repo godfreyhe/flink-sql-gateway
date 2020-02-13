@@ -31,7 +31,6 @@ import org.apache.flink.runtime.rest.handler.HandlerRequest;
 import org.apache.flink.runtime.rest.handler.RestHandlerException;
 import org.apache.flink.runtime.rest.messages.EmptyRequestBody;
 import org.apache.flink.runtime.rest.messages.MessageHeaders;
-import org.apache.flink.runtime.rest.versioning.RestAPIVersion;
 
 import org.apache.flink.shaded.netty4.io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -41,10 +40,10 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * close operation.
+ * Request handler for canceling a Flink job.
  */
-public class JobCancelHandler extends AbstractRestHandler<
-	EmptyRequestBody, JobCancelResponseBody, SessionJobMessageParameters> {
+public class JobCancelHandler
+	extends AbstractRestHandler<EmptyRequestBody, JobCancelResponseBody, SessionJobMessageParameters> {
 
 	private final SessionManager sessionManager;
 
@@ -52,10 +51,7 @@ public class JobCancelHandler extends AbstractRestHandler<
 		SessionManager sessionManager,
 		Time timeout,
 		Map<String, String> responseHeaders,
-		MessageHeaders<
-			EmptyRequestBody,
-			JobCancelResponseBody,
-			SessionJobMessageParameters> messageHeaders) {
+		MessageHeaders<EmptyRequestBody, JobCancelResponseBody, SessionJobMessageParameters> messageHeaders) {
 
 		super(timeout, responseHeaders, messageHeaders);
 		this.sessionManager = sessionManager;
@@ -63,8 +59,7 @@ public class JobCancelHandler extends AbstractRestHandler<
 
 	@Override
 	protected CompletableFuture<JobCancelResponseBody> handleRequest(
-		@Nonnull HandlerRequest<EmptyRequestBody, SessionJobMessageParameters> request)
-		throws RestHandlerException {
+		@Nonnull HandlerRequest<EmptyRequestBody, SessionJobMessageParameters> request) throws RestHandlerException {
 
 		String sessionId = request.getPathParameter(SessionIdPathParameter.class);
 		JobID jobId = request.getPathParameter(JobIdPathParameter.class);
@@ -75,11 +70,6 @@ public class JobCancelHandler extends AbstractRestHandler<
 			throw new RestHandlerException(e.getMessage(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
 		}
 
-		// TODO request.getRestApiVersion()
-		RestAPIVersion version = RestAPIVersion.V1;
-		String submitStatementUri = StatementExecuteHeaders.buildStatementSubmitUri(version, sessionId);
-		String closeSessionUri = SessionCloseHeaders.buildCloseSessionUri(version, sessionId);
-		return CompletableFuture
-			.completedFuture(new JobCancelResponseBody("CANCELED", submitStatementUri, closeSessionUri));
+		return CompletableFuture.completedFuture(new JobCancelResponseBody("CANCELED"));
 	}
 }

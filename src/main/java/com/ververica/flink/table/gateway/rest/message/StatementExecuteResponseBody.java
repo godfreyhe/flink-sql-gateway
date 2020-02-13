@@ -22,14 +22,13 @@ import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
 import org.apache.flink.runtime.rest.messages.ResponseBody;
 
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonInclude;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
 /**
- * ResponseBody for statement execute.
+ * {@link ResponseBody} for executing a statement.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class StatementExecuteResponseBody implements ResponseBody {
@@ -50,13 +49,12 @@ public class StatementExecuteResponseBody implements ResponseBody {
 		this.statementTypes = statementTypes;
 	}
 
-	@JsonIgnore
 	public List<ResultSet> getResults() {
 		return results;
 	}
 
-	@JsonIgnore
 	public List<String> getStatementTypes() {
 		return statementTypes;
 	}
+
 }

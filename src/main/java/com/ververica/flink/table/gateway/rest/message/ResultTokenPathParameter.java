@@ -22,7 +22,7 @@ import org.apache.flink.runtime.rest.messages.ConversionException;
 import org.apache.flink.runtime.rest.messages.MessagePathParameter;
 
 /**
- * MessagePathParameter for token.
+ * {@link MessagePathParameter} for token.
  */
 public class ResultTokenPathParameter extends MessagePathParameter<Long> {
 
@@ -48,6 +48,6 @@ public class ResultTokenPathParameter extends MessagePathParameter<Long> {
 
 	@Override
 	public String getDescription() {
-		return null;
+		return "A Long that identifies a toke to fetch job result.";
 	}
 }

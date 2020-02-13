@@ -23,19 +23,17 @@ import com.ververica.flink.table.gateway.rest.message.JobIdPathParameter;
 import com.ververica.flink.table.gateway.rest.message.SessionIdPathParameter;
 import com.ververica.flink.table.gateway.rest.message.SessionJobMessageParameters;
 
-import org.apache.flink.api.common.JobID;
 import org.apache.flink.runtime.rest.HttpMethodWrapper;
 import org.apache.flink.runtime.rest.messages.EmptyRequestBody;
 import org.apache.flink.runtime.rest.messages.MessageHeaders;
-import org.apache.flink.runtime.rest.versioning.RestAPIVersion;
 
 import org.apache.flink.shaded.netty4.io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
- * Headers for canceling a job.
+ * Message headers for canceling a Flink job.
  */
-public class JobCancelHeaders implements MessageHeaders<
-	EmptyRequestBody, JobCancelResponseBody, SessionJobMessageParameters> {
+public class JobCancelHeaders
+	implements MessageHeaders<EmptyRequestBody, JobCancelResponseBody, SessionJobMessageParameters> {
 
 	private static final JobCancelHeaders INSTANCE = new JobCancelHeaders();
 
@@ -82,12 +80,6 @@ public class JobCancelHeaders implements MessageHeaders<
 
 	public static JobCancelHeaders getInstance() {
 		return INSTANCE;
-	}
-
-	public static String buildCancelJobUri(RestAPIVersion version, String sessionId, JobID jobId) {
-		return "/" + version.getURLVersionPrefix() + URL
-			.replace(":" + SessionIdPathParameter.KEY, sessionId)
-			.replace(":" + JobIdPathParameter.KEY, jobId.toHexString());
 	}
 
 }

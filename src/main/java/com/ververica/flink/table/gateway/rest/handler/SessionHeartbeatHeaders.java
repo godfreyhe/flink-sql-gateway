@@ -25,15 +25,14 @@ import org.apache.flink.runtime.rest.HttpMethodWrapper;
 import org.apache.flink.runtime.rest.messages.EmptyRequestBody;
 import org.apache.flink.runtime.rest.messages.EmptyResponseBody;
 import org.apache.flink.runtime.rest.messages.MessageHeaders;
-import org.apache.flink.runtime.rest.versioning.RestAPIVersion;
 
 import org.apache.flink.shaded.netty4.io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
- * Headers for session heartbeat.
+ * Message headers for triggering session heartbeat.
  */
-public class SessionHeartbeatHeaders implements MessageHeaders<
-	EmptyRequestBody, EmptyResponseBody, SessionMessageParameters> {
+public class SessionHeartbeatHeaders
+	implements MessageHeaders<EmptyRequestBody, EmptyResponseBody, SessionMessageParameters> {
 
 	private static final SessionHeartbeatHeaders INSTANCE = new SessionHeartbeatHeaders();
 
@@ -54,7 +53,7 @@ public class SessionHeartbeatHeaders implements MessageHeaders<
 
 	@Override
 	public String getDescription() {
-		return "session heartbeat";
+		return "Triggers session heartbeat";
 	}
 
 	@Override
@@ -79,10 +78,5 @@ public class SessionHeartbeatHeaders implements MessageHeaders<
 
 	public static SessionHeartbeatHeaders getInstance() {
 		return INSTANCE;
-	}
-
-	public static String buildHeartbeatUri(RestAPIVersion version, String sessionId) {
-		return "/" + version.getURLVersionPrefix() +
-			URL.replace(":" + SessionIdPathParameter.KEY, sessionId);
 	}
 }

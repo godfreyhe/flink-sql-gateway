@@ -34,10 +34,10 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Handler for getting info.
+ * Request handler for getting info.
  */
-public class GetInfoHandler extends AbstractRestHandler<
-	EmptyRequestBody, GetInfoResponseBody, EmptyMessageParameters> {
+public class GetInfoHandler
+	extends AbstractRestHandler<EmptyRequestBody, GetInfoResponseBody, EmptyMessageParameters> {
 
 	public GetInfoHandler(
 		Time timeout,
