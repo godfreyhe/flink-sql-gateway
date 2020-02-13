@@ -18,8 +18,8 @@
 
 package com.ververica.flink.table.gateway.result;
 
-import com.ververica.flink.table.client.SqlClientException;
 import com.ververica.flink.table.gateway.SqlExecutionException;
+import com.ververica.flink.table.gateway.SqlGatewayException;
 import com.ververica.flink.table.gateway.sink.CollectStreamTableSink;
 
 import org.apache.flink.api.common.ExecutionConfig;
@@ -79,7 +79,7 @@ public abstract class CollectStreamResult<C> extends BasicResult<C> implements D
 			// pass gateway port and address such that iterator knows where to bind to
 			iterator = new SocketStreamIterator<>(gatewayPort, gatewayAddress, serializer);
 		} catch (IOException e) {
-			throw new SqlClientException("Could not start socket for result retrieval.", e);
+			throw new SqlGatewayException("Could not start socket for result retrieval.", e);
 		}
 
 		// create table sink

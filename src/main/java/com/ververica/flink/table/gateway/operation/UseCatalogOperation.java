@@ -19,13 +19,12 @@
 package com.ververica.flink.table.gateway.operation;
 
 import com.ververica.flink.table.gateway.Executor;
-import com.ververica.flink.table.rest.result.ResultSet;
+import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
 /**
  * Operation for USE CATALOG command.
  */
 public class UseCatalogOperation implements NonJobOperation {
-
 	private final String name;
 	private final String sessionId;
 	private final Executor executor;

@@ -18,12 +18,10 @@
 
 package com.ververica.flink.table.gateway;
 
-import com.ververica.flink.table.client.SqlClientException;
-import com.ververica.flink.table.client.cli.CliOptions;
-import com.ververica.flink.table.client.cli.CliOptionsParser;
-import com.ververica.flink.table.config.Environment;
-import com.ververica.flink.table.config.EnvironmentUtils;
-import com.ververica.flink.table.rest.SqlClientGatewayEndpoint;
+import com.ververica.flink.table.gateway.config.Environment;
+import com.ververica.flink.table.gateway.options.GatewayOptions;
+import com.ververica.flink.table.gateway.options.GatewayOptionsParser;
+import com.ververica.flink.table.gateway.rest.SqlGatewayEndpoint;
 
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.RestOptions;
@@ -32,42 +30,32 @@ import org.apache.flink.runtime.rest.RestServerEndpointConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
 /**
- * SQL Client for submitting SQL statements. The client can be executed in two
- * modes: a gateway and embedded mode.
- *
- * <p>- In embedded mode, the SQL CLI is tightly coupled with the executor in a common process. This
- * allows for submitting jobs without having to start an additional component.
- *
- * <p>- In future versions: In gateway mode, the SQL CLI client connects to the REST API of the gateway
- * and allows for managing queries via console.
- *
- * <p>For debugging in an IDE you can execute the main method of this class using:
- * "embedded --defaults /path/to/sql-client-defaults.yaml --jar /path/to/target/flink-sql-client-*.jar"
- *
- * <p>Make sure that the FLINK_CONF_DIR environment variable is set.
+ * SqlGateway.
  */
 public class SqlGateway {
 
 	private static final Logger LOG = LoggerFactory.getLogger(SqlGateway.class);
 
-	private final CliOptions options;
-	private SqlClientGatewayEndpoint endpoint;
+	private final GatewayOptions options;
+	private SqlGatewayEndpoint endpoint;
+	private SessionManager sessionManager;
 
-	public SqlGateway(CliOptions options) {
+	public SqlGateway(GatewayOptions options) {
 		this.options = options;
 	}
 
 	private void start() throws Exception {
-		final Environment defaultEnv =
-			EnvironmentUtils.readDefaultGatewayEnvironment(options.getDefaults().orElse(null));
+		final Environment defaultEnv = readEnvironment(options.getDefaults().orElse(null));
 
-		final Integer port = options.getGatewayPort().orElse(defaultEnv.getGateway().getPort());
-		final String address = options.getGatewayHost().orElse(defaultEnv.getGateway().getAddress());
-		final Optional<String> bindAddress = defaultEnv.getGateway().getBindAddress();
+		final Integer port = options.getPort().orElse(defaultEnv.getServer().getPort());
+		final String address = defaultEnv.getServer().getAddress();
+		final Optional<String> bindAddress = defaultEnv.getServer().getBindAddress();
 
 		Configuration configuration = new Configuration();
 		configuration.setString(RestOptions.ADDRESS, address);
@@ -75,9 +63,9 @@ public class SqlGateway {
 		configuration.setString(RestOptions.BIND_PORT, String.valueOf(port));
 
 		final ExecutorImpl executor = new ExecutorImpl(defaultEnv, options.getJars(), options.getLibraryDirs());
-		final SessionManager sessionManager = new SessionManager(defaultEnv, executor);
+		sessionManager = new SessionManager(defaultEnv, executor);
 
-		endpoint = new SqlClientGatewayEndpoint(
+		endpoint = new SqlGatewayEndpoint(
 			RestServerEndpointConfiguration.fromConfiguration(configuration),
 			sessionManager);
 		endpoint.start();
@@ -86,17 +74,33 @@ public class SqlGateway {
 		new CountDownLatch(1).await();
 	}
 
+	private Environment readEnvironment(URL envUrl) {
+		// use an empty environment by default
+		if (envUrl == null) {
+			System.out.println("No session environment specified.");
+			return new Environment();
+		}
+
+		System.out.println("Reading session environment from: " + envUrl);
+		LOG.info("Using session environment file: {}", envUrl);
+		try {
+			return Environment.parse(envUrl);
+		} catch (IOException e) {
+			throw new SqlGatewayException("Could not read session environment file at: " + envUrl, e);
+		}
+	}
+
 	// --------------------------------------------------------------------------------------------
 
 	public static void main(String[] args) {
-		final CliOptions options = CliOptionsParser.parseGatewayModeGateway(args);
+		final GatewayOptions options = GatewayOptionsParser.parseGatewayModeGateway(args);
 		if (options.isPrintHelp()) {
-			CliOptionsParser.printHelpGatewayModeGateway();
+			GatewayOptionsParser.printHelp();
 		} else {
 			SqlGateway gateway = new SqlGateway(options);
 			try {
 				// add shutdown hook
-				Runtime.getRuntime().addShutdownHook(new GatewayShutdownThread(gateway));
+				Runtime.getRuntime().addShutdownHook(new ShutdownThread(gateway));
 
 				// do the actual work
 				gateway.start();
@@ -106,7 +110,7 @@ public class SqlGateway {
 				System.out.println();
 				LOG.error("Gateway must stop. Unexpected exception. This is a bug. Please consider filing an issue.",
 					t);
-				throw new SqlClientException(
+				throw new SqlGatewayException(
 					"Unexpected exception. This is a bug. Please consider filing an issue.", t);
 			}
 		}
@@ -114,23 +118,32 @@ public class SqlGateway {
 
 	// --------------------------------------------------------------------------------------------
 
-	private static class GatewayShutdownThread extends Thread {
+	private static class ShutdownThread extends Thread {
 
 		private final SqlGateway gateway;
 
-		public GatewayShutdownThread(SqlGateway gateway) {
+		public ShutdownThread(SqlGateway gateway) {
 			this.gateway = gateway;
 		}
 
 		@Override
 		public void run() {
-			// Shutdown the executor
+			// Shutdown the gateway
 			System.out.println("\nShutting down the gateway...");
 			if (gateway.endpoint != null) {
 				try {
 					gateway.endpoint.closeAsync();
 				} catch (Exception e) {
-					throw new SqlClientException(e);
+					LOG.error("Failed to shut down the endpoint: " + e.getMessage());
+					System.out.println("Failed to shut down the endpoint: " + e.getMessage());
+				}
+			}
+			if (gateway.sessionManager != null) {
+				try {
+					gateway.sessionManager.close();
+				} catch (Exception e) {
+					LOG.error("Failed to shut down the session manger: " + e.getMessage());
+					System.out.println("Failed to shut down the session manger: " + e.getMessage());
 				}
 			}
 			System.out.println("done.");

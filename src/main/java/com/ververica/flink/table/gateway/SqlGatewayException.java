@@ -21,7 +21,7 @@ package com.ververica.flink.table.gateway;
 /**
  * SqlGatewayException.
  */
-public class SqlGatewayException extends Exception {
+public class SqlGatewayException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 

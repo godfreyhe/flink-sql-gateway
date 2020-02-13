@@ -18,10 +18,10 @@
 
 package com.ververica.flink.table.gateway.result;
 
-import com.ververica.flink.table.client.SqlClientException;
-import com.ververica.flink.table.config.Environment;
-import com.ververica.flink.table.config.entries.DeploymentEntry;
 import com.ververica.flink.table.gateway.SqlExecutionException;
+import com.ververica.flink.table.gateway.SqlGatewayException;
+import com.ververica.flink.table.gateway.config.Environment;
+import com.ververica.flink.table.gateway.config.entries.DeploymentEntry;
 
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -135,7 +135,7 @@ public class ResultStore {
 			try {
 				return InetAddress.getByName(address);
 			} catch (UnknownHostException e) {
-				throw new SqlClientException("Invalid gateway address '" + address + "' for result retrieval.", e);
+				throw new SqlGatewayException("Invalid gateway address '" + address + "' for result retrieval.", e);
 			}
 		} else {
 			// TODO cache this
@@ -149,14 +149,14 @@ public class ResultStore {
 						deploy.getResponseTimeout(),
 						400);
 				} catch (Exception e) {
-					throw new SqlClientException("Could not determine address of the gateway for result retrieval " +
+					throw new SqlGatewayException("Could not determine address of the gateway for result retrieval " +
 						"by connecting to the job manager. Please specify the gateway address manually.", e);
 				}
 			} else {
 				try {
 					return InetAddress.getLocalHost();
 				} catch (UnknownHostException e) {
-					throw new SqlClientException("Could not determine address of the gateway for result retrieval. " +
+					throw new SqlGatewayException("Could not determine address of the gateway for result retrieval. " +
 						"Please specify the gateway address manually.", e);
 				}
 			}

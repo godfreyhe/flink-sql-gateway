@@ -18,17 +18,15 @@
 
 package com.ververica.flink.table.gateway.operation;
 
-import com.ververica.flink.table.client.cli.CliStrings;
-import com.ververica.flink.table.config.entries.ViewEntry;
 import com.ververica.flink.table.gateway.Executor;
 import com.ververica.flink.table.gateway.SqlExecutionException;
-import com.ververica.flink.table.rest.result.ResultSet;
+import com.ververica.flink.table.gateway.config.entries.ViewEntry;
+import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
 /**
  * Operation for CREATE VIEW command.
  */
 public class CreateViewOperation implements NonJobOperation {
-
 	private final String name;
 	private final String query;
 	private final String sessionId;
@@ -45,7 +43,7 @@ public class CreateViewOperation implements NonJobOperation {
 	public ResultSet execute() {
 		ViewEntry previousView = executor.listViews(sessionId).get(name);
 		if (previousView != null) {
-			throw new SqlExecutionException(CliStrings.MESSAGE_VIEW_ALREADY_EXISTS);
+			throw new SqlExecutionException("'" + name + "' has already been defined in the current session.");
 		}
 
 		try {

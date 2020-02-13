@@ -20,11 +20,10 @@ package com.ververica.flink.table.gateway.operation;
 
 import com.ververica.flink.table.gateway.Executor;
 import com.ververica.flink.table.gateway.ExecutorImpl;
-import com.ververica.flink.table.rest.result.ConstantNames;
-import com.ververica.flink.table.rest.result.ResultSet;
+import com.ververica.flink.table.gateway.rest.result.ConstantNames;
+import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
 public class ShowCurrentDatabaseOperation implements NonJobOperation {
-
 	private final String sessionId;
 	private final Executor executor;
 

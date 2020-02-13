@@ -18,10 +18,9 @@
 
 package com.ververica.flink.table.gateway.operation;
 
-import com.ververica.flink.table.gateway.Executor;
-import com.ververica.flink.table.rest.result.ColumnInfo;
-import com.ververica.flink.table.rest.result.ConstantNames;
-import com.ververica.flink.table.rest.result.ResultSet;
+import com.ververica.flink.table.gateway.rest.result.ColumnInfo;
+import com.ververica.flink.table.gateway.rest.result.ConstantNames;
+import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
 import org.apache.flink.table.types.logical.BigIntType;
 import org.apache.flink.table.types.logical.VarCharType;
@@ -39,11 +38,6 @@ public class OperationUtil {
 	public static final ResultSet AFFECTED_ROW_COUNT0 = new ResultSet(
 		Collections.singletonList(ColumnInfo.create(ConstantNames.AFFECTED_ROW_COUNT, new BigIntType(false))),
 		Collections.singletonList(Row.of(0L)));
-
-	public static Operation createCompleteStatementOperation(
-		String sessionId, String statement, int position, Executor executor) {
-		return new CompleteStatementOperation(sessionId, statement, position, executor);
-	}
 
 	public static ResultSet singleStringToResultSet(String str, String columnName) {
 		return new ResultSet(

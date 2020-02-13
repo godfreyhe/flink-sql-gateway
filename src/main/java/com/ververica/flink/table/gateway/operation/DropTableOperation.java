@@ -19,13 +19,12 @@
 package com.ververica.flink.table.gateway.operation;
 
 import com.ververica.flink.table.gateway.Executor;
-import com.ververica.flink.table.rest.result.ResultSet;
+import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
 /**
  * Operation for DROP TABLE command.
  */
 public class DropTableOperation implements NonJobOperation {
-
 	private final String ddl;
 	private final String sessionId;
 	private final Executor executor;

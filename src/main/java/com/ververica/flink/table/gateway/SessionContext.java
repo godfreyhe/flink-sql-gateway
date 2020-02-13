@@ -18,7 +18,7 @@
 
 package com.ververica.flink.table.gateway;
 
-import com.ververica.flink.table.config.Environment;
+import com.ververica.flink.table.gateway.config.Environment;
 
 import javax.annotation.Nullable;
 

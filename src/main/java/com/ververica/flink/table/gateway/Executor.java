@@ -18,7 +18,7 @@
 
 package com.ververica.flink.table.gateway;
 
-import com.ververica.flink.table.config.entries.ViewEntry;
+import com.ververica.flink.table.gateway.config.entries.ViewEntry;
 import com.ververica.flink.table.gateway.result.TypedResult;
 
 import org.apache.flink.api.java.tuple.Tuple2;

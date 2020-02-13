@@ -20,10 +20,10 @@ package com.ververica.flink.table.gateway.operation;
 
 import com.ververica.flink.table.gateway.Executor;
 import com.ververica.flink.table.gateway.SqlGatewayException;
-import com.ververica.flink.table.rest.result.ColumnInfo;
-import com.ververica.flink.table.rest.result.ConstantNames;
-import com.ververica.flink.table.rest.result.ResultSet;
-import com.ververica.flink.table.rest.result.TableSchemaUtil;
+import com.ververica.flink.table.gateway.rest.result.ColumnInfo;
+import com.ververica.flink.table.gateway.rest.result.ConstantNames;
+import com.ververica.flink.table.gateway.rest.result.ResultSet;
+import com.ververica.flink.table.gateway.rest.result.TableSchemaUtil;
 
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.types.logical.VarCharType;
@@ -39,7 +39,6 @@ import java.util.List;
  * Operation for DESCRIBE command.
  */
 public class DescribeOperation implements NonJobOperation {
-
 	private final String name;
 	private final String sessionId;
 	private final Executor executor;

@@ -18,8 +18,8 @@
 
 package com.ververica.flink.table.gateway.operation;
 
-import com.ververica.flink.table.client.cli.SqlCommandParser;
 import com.ververica.flink.table.gateway.Executor;
+import com.ververica.flink.table.gateway.SqlCommandParser;
 
 /**
  * Util class.
@@ -74,6 +74,7 @@ public class OperationFactory {
 				operation = new UseDatabaseOperation(call.operands[0], sessionId, executor);
 				break;
 			case INSERT_INTO:
+			case INSERT_OVERWRITE:
 				operation = new InsertOperation(call.operands[0], sessionId, executor);
 				break;
 			case SHOW_MODULES:

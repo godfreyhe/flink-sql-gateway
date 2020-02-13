@@ -18,8 +18,8 @@
 
 package com.ververica.flink.table.gateway;
 
-import com.ververica.flink.table.config.Environment;
-import com.ververica.flink.table.config.entries.ExecutionEntry;
+import com.ververica.flink.table.gateway.config.Environment;
+import com.ververica.flink.table.gateway.config.entries.ExecutionEntry;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,31 +43,37 @@ public class SessionManager {
 
 	private final Map<String, Session> sessions;
 
+	private ScheduledExecutorService executorService;
 	private ScheduledFuture timeoutCheckerFuture;
 
-	public SessionManager(Environment defaultEnvironment, Executor executor) {
-		this.defaultEnvironment = defaultEnvironment;
+	public SessionManager(Environment defaultEnv, Executor executor) {
+		this.defaultEnvironment = defaultEnv;
 		this.executor = executor;
-		this.idleTimeout = defaultEnvironment.getSession().getIdleTimeout();
-		this.checkInterval = defaultEnvironment.getSession().getCheckInterval();
-		this.maxCount = defaultEnvironment.getSession().getMaxCount();
+		this.idleTimeout = defaultEnv.getSession().getIdleTimeout();
+		this.checkInterval = defaultEnv.getSession().getCheckInterval();
+		this.maxCount = defaultEnv.getSession().getMaxCount();
 		this.sessions = new ConcurrentHashMap<>();
 	}
 
 	public void open() {
 		executor.start();
-		ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
-		timeoutCheckerFuture = service.scheduleAtFixedRate(() -> {
-			for (Map.Entry<String, Session> entry : sessions.entrySet()) {
-				if (isSessionExpired(entry.getValue())) {
-					closeSession(entry.getValue());
+		if (checkInterval > 0 && idleTimeout > 0) {
+			executorService = Executors.newSingleThreadScheduledExecutor();
+			timeoutCheckerFuture = executorService.scheduleAtFixedRate(() -> {
+				for (Map.Entry<String, Session> entry : sessions.entrySet()) {
+					if (isSessionExpired(entry.getValue())) {
+						closeSession(entry.getValue());
+					}
 				}
-			}
-		}, checkInterval, checkInterval, TimeUnit.MILLISECONDS);
+			}, checkInterval, checkInterval, TimeUnit.MILLISECONDS);
+		}
 	}
 
 	public void close() {
-		timeoutCheckerFuture.cancel(true);
+		if (executorService != null) {
+			timeoutCheckerFuture.cancel(true);
+			executorService.shutdown();
+		}
 	}
 
 	public String createSession(
@@ -139,6 +145,10 @@ public class SessionManager {
 	}
 
 	private boolean isSessionExpired(Session session) {
-		return (System.currentTimeMillis() - session.getLastVisitedTime()) > idleTimeout;
+		if (idleTimeout > 0) {
+			return (System.currentTimeMillis() - session.getLastVisitedTime()) > idleTimeout;
+		} else {
+			return false;
+		}
 	}
 }

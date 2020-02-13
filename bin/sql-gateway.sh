@@ -21,10 +21,19 @@
 # Adopted from "flink" bash script
 ################################################################################
 
-./find-flink-home.sh
-exit_val=$?
-if [[ ${exit_val} -ne 0 ]]; then
-   exit ${exit_val}
+
+if [ -z "$FLINK_HOME" ]; then
+   (>&2  echo "FLINK_HOME is not found in environment variable.")
+
+    # exit to force process failure
+    exit 1
+fi
+
+if [ ! -d "$FLINK_HOME" ]; then
+    (>&2 echo "$FLINK_HOME does not exist.")
+
+    # exit to force process failure
+    exit 1
 fi
 
 target="$0"
@@ -46,7 +55,12 @@ done
 # Convert relative path to absolute path
 bin=`dirname "$target"`
 FLINK_SQL_GATEWAY_HOME=`cd "$bin/.."; pwd -P`
+
+FLINK_SQL_GATEWAY_CONF="$FLINK_SQL_GATEWAY_HOME"/conf
 FLINK_SQL_GATEWAY_LIB="$FLINK_SQL_GATEWAY_HOME"/lib
+FLINK_SQL_GATEWAY_LOG="$FLINK_SQL_GATEWAY_HOME"/log
+
+FLINK_SQL_GATEWAY_DEFAULT_CONF="$FLINK_SQL_GATEWAY_CONF"/sql-gateway-defaults.yaml
 
 # TODO use find -regex
 FLINK_SQL_GATEWAY_JAR=$(ls "$FLINK_SQL_GATEWAY_LIB" | grep "flink-sql-gateway" | grep ".jar")
@@ -54,6 +68,7 @@ if [ -n "$FLINK_SQL_GATEWAY_JAR" ]; then
     FLINK_SQL_GATEWAY_JAR="$FLINK_SQL_GATEWAY_LIB"/"$FLINK_SQL_GATEWAY_JAR"
 fi
 
+# build flink-sql-gateway classpath
 FLINK_SQL_GATEWAY_CLASSPATH=""
 while read -d '' -r jarfile ; do
     if [[ "$FLINK_SQL_GATEWAY_CLASSPATH" == "" ]]; then
@@ -63,6 +78,7 @@ while read -d '' -r jarfile ; do
     fi
 done < <(find "$FLINK_SQL_GATEWAY_LIB" ! -type d -name '*.jar' -print0 | sort -z)
 
+# build flink class path
 cd "$FLINK_HOME"/bin
 # get flink config
 . ./config.sh
@@ -73,22 +89,20 @@ fi
 
 CC_CLASSPATH=`constructFlinkClassPath`
 
-################################################################################
-# SQL gateway specific logic
-################################################################################
-# TODO use flink-sql-gateway log config ?
-log=$FLINK_LOG_DIR/flink-$FLINK_IDENT_STRING-sql-gateway-$HOSTNAME.log
-log_setting=(-Dlog.file="$log" -Dlog4j.configuration=file:"$FLINK_CONF_DIR"/log4j-cli.properties -Dlogback.configurationFile=file:"$FLINK_CONF_DIR"/logback.xml)
+
+# build log config
+log=$FLINK_SQL_GATEWAY_LOG/flink-sql-gateway-$FLINK_IDENT_STRING-$HOSTNAME.log
+log_setting=(-Dlog.file="$log" -Dlog4j.configuration=file:"$FLINK_SQL_GATEWAY_CONF"/log4j.properties -Dlogback.configurationFile=file:"$FLINK_SQL_GATEWAY_CONF"/logback.xml)
 
 
 if [ -n "$FLINK_SQL_GATEWAY_JAR" ]; then
 
     # start gateway with jar
-    exec $JAVA_RUN $JVM_ARGS "${log_setting[@]}" -classpath "`manglePathList "$CC_CLASSPATH:$INTERNAL_HADOOP_CLASSPATHS:$FLINK_SQL_GATEWAY_CLASSPATH"`" com.ververica.flink.table.gateway.SqlGateway "$@" --jar "`manglePath $FLINK_SQL_GATEWAY_JAR`"
+    exec $JAVA_RUN $JVM_ARGS "${log_setting[@]}" -classpath "`manglePathList "$CC_CLASSPATH:$INTERNAL_HADOOP_CLASSPATHS:$FLINK_SQL_GATEWAY_CLASSPATH"`" com.ververica.flink.table.gateway.SqlGateway "$@" --defaults "$FLINK_SQL_GATEWAY_DEFAULT_CONF" --jar "`manglePath $FLINK_SQL_GATEWAY_JAR`"
 
 # write error message to stderr
 else
-    (>&2 echo "[ERROR] Flink SQL Gateway JAR file 'flink-sql-gateway*.jar' neither found in classpath nor /lib directory should be located in $FLINK_SQL_GATEWAY_LIB.")
+    (>&2 echo "[ERROR] Flink SQL Gateway JAR file 'flink-sql-gateway*.jar' should be located in $FLINK_SQL_GATEWAY_LIB.")
 
     # exit to force process failure
     exit 1

@@ -19,7 +19,7 @@
 package com.ververica.flink.table.gateway.operation;
 
 import com.ververica.flink.table.gateway.SqlGatewayException;
-import com.ververica.flink.table.rest.result.ResultSet;
+import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.JobStatus;

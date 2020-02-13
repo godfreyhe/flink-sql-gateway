@@ -19,9 +19,9 @@
 package com.ververica.flink.table.gateway.operation;
 
 import com.ververica.flink.table.gateway.Executor;
-import com.ververica.flink.table.rest.result.ColumnInfo;
-import com.ververica.flink.table.rest.result.ConstantNames;
-import com.ververica.flink.table.rest.result.ResultSet;
+import com.ververica.flink.table.gateway.rest.result.ColumnInfo;
+import com.ververica.flink.table.gateway.rest.result.ConstantNames;
+import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
 import org.apache.flink.table.types.logical.VarCharType;
 import org.apache.flink.types.Row;
@@ -35,7 +35,6 @@ import java.util.Map;
  * Operation for SET command.
  */
 public class SetOperation implements NonJobOperation {
-
 	private final String key;
 	private final String value;
 	private final String sessionId;

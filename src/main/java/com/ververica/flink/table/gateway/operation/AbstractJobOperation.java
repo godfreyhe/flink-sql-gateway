@@ -19,14 +19,15 @@
 package com.ververica.flink.table.gateway.operation;
 
 import com.ververica.flink.table.gateway.SqlGatewayException;
-import com.ververica.flink.table.rest.result.ColumnInfo;
-import com.ververica.flink.table.rest.result.ResultSet;
+import com.ververica.flink.table.gateway.rest.result.ColumnInfo;
+import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.types.Row;
 
 import javax.annotation.Nullable;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -37,7 +38,6 @@ import java.util.Optional;
  * Abstract Operation.
  */
 public abstract class AbstractJobOperation implements JobOperation {
-
 	protected volatile JobID jobId;
 
 	private long currentToken;

@@ -18,17 +18,15 @@
 
 package com.ververica.flink.table.gateway.operation;
 
-import com.ververica.flink.table.client.cli.CliStrings;
-import com.ververica.flink.table.config.entries.ViewEntry;
 import com.ververica.flink.table.gateway.Executor;
 import com.ververica.flink.table.gateway.SqlExecutionException;
-import com.ververica.flink.table.rest.result.ResultSet;
+import com.ververica.flink.table.gateway.config.entries.ViewEntry;
+import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
 /**
  * Operation for DROP VIEW command.
  */
 public class DropViewOperation implements NonJobOperation {
-
 	private final String name;
 	private final String sessionId;
 	private final Executor executor;
@@ -43,7 +41,7 @@ public class DropViewOperation implements NonJobOperation {
 	public ResultSet execute() {
 		ViewEntry view = executor.listViews(sessionId).get(name);
 		if (view == null) {
-			throw new SqlExecutionException(CliStrings.MESSAGE_VIEW_NOT_FOUND);
+			throw new SqlExecutionException("'" + name + "' does not exist in the current session.");
 		}
 
 		try {

@@ -19,13 +19,12 @@
 package com.ververica.flink.table.gateway.operation;
 
 import com.ververica.flink.table.gateway.Executor;
-import com.ververica.flink.table.rest.result.ResultSet;
+import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
 /**
  * Operation for CREATE/DROP DATABASE and ALTER DATABASE/TABLE command.
  */
 public class UpdateOperation implements NonJobOperation {
-
 	private final String stmt;
 	private final String sessionId;
 	private final Executor executor;

@@ -21,10 +21,10 @@ package com.ververica.flink.table.gateway.operation;
 import com.ververica.flink.table.gateway.Executor;
 import com.ververica.flink.table.gateway.ResultDescriptor;
 import com.ververica.flink.table.gateway.SqlGatewayException;
+import com.ververica.flink.table.gateway.rest.result.ColumnInfo;
+import com.ververica.flink.table.gateway.rest.result.ConstantNames;
+import com.ververica.flink.table.gateway.rest.result.ResultSet;
 import com.ververica.flink.table.gateway.result.TypedResult;
-import com.ververica.flink.table.rest.result.ColumnInfo;
-import com.ververica.flink.table.rest.result.ConstantNames;
-import com.ververica.flink.table.rest.result.ResultSet;
 
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.api.java.tuple.Tuple2;
@@ -45,7 +45,6 @@ import java.util.concurrent.TimeoutException;
  * Operation for SELECT command.
  */
 public class SelectOperation extends AbstractJobOperation {
-
 	private final String sql;
 	private final String sessionId;
 	private final Executor executor;

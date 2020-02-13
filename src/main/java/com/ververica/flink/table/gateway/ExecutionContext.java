@@ -18,14 +18,14 @@
 
 package com.ververica.flink.table.gateway;
 
-import com.ververica.flink.table.config.Environment;
-import com.ververica.flink.table.config.entries.DeploymentEntry;
-import com.ververica.flink.table.config.entries.ExecutionEntry;
-import com.ververica.flink.table.config.entries.SinkTableEntry;
-import com.ververica.flink.table.config.entries.SourceSinkTableEntry;
-import com.ververica.flink.table.config.entries.SourceTableEntry;
-import com.ververica.flink.table.config.entries.TemporalTableEntry;
-import com.ververica.flink.table.config.entries.ViewEntry;
+import com.ververica.flink.table.gateway.config.Environment;
+import com.ververica.flink.table.gateway.config.entries.DeploymentEntry;
+import com.ververica.flink.table.gateway.config.entries.ExecutionEntry;
+import com.ververica.flink.table.gateway.config.entries.SinkTableEntry;
+import com.ververica.flink.table.gateway.config.entries.SourceSinkTableEntry;
+import com.ververica.flink.table.gateway.config.entries.SourceTableEntry;
+import com.ververica.flink.table.gateway.config.entries.TemporalTableEntry;
+import com.ververica.flink.table.gateway.config.entries.ViewEntry;
 
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.time.Time;

@@ -18,10 +18,9 @@
 
 package com.ververica.flink.table.gateway;
 
-import com.ververica.flink.table.client.SqlClientException;
-import com.ververica.flink.table.config.Environment;
-import com.ververica.flink.table.config.entries.TableEntry;
-import com.ververica.flink.table.config.entries.ViewEntry;
+import com.ververica.flink.table.gateway.config.Environment;
+import com.ververica.flink.table.gateway.config.entries.TableEntry;
+import com.ververica.flink.table.gateway.config.entries.ViewEntry;
 import com.ververica.flink.table.gateway.result.ChangelogResult;
 import com.ververica.flink.table.gateway.result.DynamicResult;
 import com.ververica.flink.table.gateway.result.MaterializedResult;
@@ -130,7 +129,7 @@ public class ExecutorImpl implements Executor {
 			this.commandLines = CliFrontend.loadCustomCommandLines(flinkConfig, flinkConfigDir);
 			this.commandLineOptions = collectCommandLineOptions(commandLines);
 		} catch (Exception e) {
-			throw new SqlClientException("Could not load Flink configuration.", e);
+			throw new SqlGatewayException("Could not load Flink configuration.", e);
 		}
 
 		this.defaultEnvironment = defaultEnvironment;
@@ -704,13 +703,13 @@ public class ExecutorImpl implements Executor {
 			for (URL libUrl : libraries) {
 				final File dir = new File(libUrl.toURI());
 				if (!dir.isDirectory()) {
-					throw new SqlClientException("Directory expected: " + dir);
+					throw new SqlGatewayException("Directory expected: " + dir);
 				} else if (!dir.canRead()) {
-					throw new SqlClientException("Directory cannot be read: " + dir);
+					throw new SqlGatewayException("Directory cannot be read: " + dir);
 				}
 				final File[] files = dir.listFiles();
 				if (files == null) {
-					throw new SqlClientException("Directory cannot be read: " + dir);
+					throw new SqlGatewayException("Directory cannot be read: " + dir);
 				}
 				for (File f : files) {
 					// only consider jars
@@ -722,7 +721,7 @@ public class ExecutorImpl implements Executor {
 				}
 			}
 		} catch (Exception e) {
-			throw new SqlClientException("Could not load all required JAR files.", e);
+			throw new SqlGatewayException("Could not load all required JAR files.", e);
 		}
 
 		if (LOG.isDebugEnabled()) {

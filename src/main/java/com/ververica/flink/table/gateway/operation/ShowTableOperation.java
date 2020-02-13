@@ -18,11 +18,11 @@
 
 package com.ververica.flink.table.gateway.operation;
 
-import com.ververica.flink.table.config.entries.ViewEntry;
 import com.ververica.flink.table.gateway.Executor;
-import com.ververica.flink.table.rest.result.ColumnInfo;
-import com.ververica.flink.table.rest.result.ConstantNames;
-import com.ververica.flink.table.rest.result.ResultSet;
+import com.ververica.flink.table.gateway.config.entries.ViewEntry;
+import com.ververica.flink.table.gateway.rest.result.ColumnInfo;
+import com.ververica.flink.table.gateway.rest.result.ConstantNames;
+import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
 import org.apache.flink.table.types.logical.VarCharType;
 import org.apache.flink.types.Row;
@@ -36,7 +36,6 @@ import java.util.Map;
  * Operation for SHOW TABLE command.
  */
 public class ShowTableOperation implements NonJobOperation {
-
 	private final String sessionId;
 	private final Executor executor;
 
