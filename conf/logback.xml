@@ -25,13 +25,13 @@
         </encoder>
     </appender>
 
-    <!-- This affects logging for both user code and Flink -->
+    <!-- # This affects logging for both flink-sql-gateway and Flink -->
     <root level="INFO">
         <appender-ref ref="file"/>
     </root>
 
-    <!-- Uncomment this if you want to only change Flink's logging -->
-    <!--<logger name="org.apache.flink" level="INFO">-->
+    <!-- Uncomment this if you want to only change flink-sql-gateway's logging -->
+    <!--<logger name="com.ververica.flink.table.gateway" level="INFO">-->
         <!--<appender-ref ref="file"/>-->
     <!--</logger>-->
 </configuration>

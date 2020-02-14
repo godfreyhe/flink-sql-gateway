@@ -108,7 +108,7 @@ public class GatewayOptionsParser {
 
 		HelpFormatter formatter = new HelpFormatter();
 		formatter.setLeftPadding(5);
-		formatter.setWidth(100);
+		formatter.setWidth(80);
 
 		formatter.printHelp(" ", GATEWAY_OPTIONS);
 
