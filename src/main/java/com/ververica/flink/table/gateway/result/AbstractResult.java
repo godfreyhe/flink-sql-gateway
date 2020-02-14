@@ -18,25 +18,36 @@
 
 package com.ververica.flink.table.gateway.result;
 
-import org.apache.flink.types.Row;
-
-import java.util.List;
-
 /**
- * A result that is materialized and can be viewed by navigating through a snapshot.
+ * Basic result of a table program that has been submitted to a cluster.
  *
  * @param <C> cluster id to which this result belongs to
  */
-public interface MaterializedResult<C> extends DynamicResult<C> {
+public abstract class AbstractResult<C, R> implements Result<C, R> {
 
-	/**
-	 * Takes a snapshot of the current table and returns the number of pages for navigating
-	 * through the snapshot.
-	 */
-	TypedResult<Integer> snapshot(int pageSize);
+	protected C clusterId;
+	protected String webInterfaceUrl;
 
-	/**
-	 * Retrieves a page of a snapshotted result.
-	 */
-	List<Row> retrievePage(int page);
+	@Override
+	public void setClusterInformation(C clusterId, String webInterfaceUrl) {
+		if (this.clusterId != null || this.webInterfaceUrl != null) {
+			throw new IllegalStateException("Cluster information is already present.");
+		}
+		this.clusterId = clusterId;
+		this.webInterfaceUrl = webInterfaceUrl;
+	}
+
+	public C getClusterId() {
+		if (this.clusterId == null) {
+			throw new IllegalStateException("Cluster ID has not been set.");
+		}
+		return clusterId;
+	}
+
+	public String getWebInterfaceUrl() {
+		if (this.webInterfaceUrl == null) {
+			throw new IllegalStateException("Cluster web interface URL has not been set.");
+		}
+		return webInterfaceUrl;
+	}
 }

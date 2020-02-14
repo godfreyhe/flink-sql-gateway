@@ -19,6 +19,7 @@
 package com.ververica.flink.table.gateway;
 
 import com.ververica.flink.table.gateway.config.Environment;
+import com.ververica.flink.table.gateway.context.DefaultContext;
 import com.ververica.flink.table.gateway.options.GatewayOptions;
 import com.ververica.flink.table.gateway.options.GatewayOptionsParser;
 import com.ververica.flink.table.gateway.rest.SqlGatewayEndpoint;
@@ -26,12 +27,16 @@ import com.ververica.flink.table.gateway.rest.SqlGatewayEndpoint;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.runtime.rest.RestServerEndpointConfiguration;
+import org.apache.flink.util.JarUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
@@ -62,8 +67,9 @@ public class SqlGateway {
 		bindAddress.ifPresent(s -> configuration.setString(RestOptions.BIND_ADDRESS, s));
 		configuration.setString(RestOptions.BIND_PORT, String.valueOf(port));
 
-		final ExecutorImpl executor = new ExecutorImpl(defaultEnv, options.getJars(), options.getLibraryDirs());
-		sessionManager = new SessionManager(defaultEnv, executor);
+		final List<URL> dependencies = discoverDependencies(options.getJars(), options.getLibraryDirs());
+		final DefaultContext defaultContext = new DefaultContext(defaultEnv, dependencies);
+		sessionManager = new SessionManager(defaultContext);
 
 		endpoint = new SqlGatewayEndpoint(
 			RestServerEndpointConfiguration.fromConfiguration(configuration),
@@ -88,6 +94,47 @@ public class SqlGateway {
 		} catch (IOException e) {
 			throw new SqlGatewayException("Could not read configuration file at: " + envUrl, e);
 		}
+	}
+
+	private static List<URL> discoverDependencies(List<URL> jars, List<URL> libraries) {
+		final List<URL> dependencies = new ArrayList<>();
+		try {
+			// find jar files
+			for (URL url : jars) {
+				JarUtils.checkJarFile(url);
+				dependencies.add(url);
+			}
+
+			// find jar files in library directories
+			for (URL libUrl : libraries) {
+				final File dir = new File(libUrl.toURI());
+				if (!dir.isDirectory()) {
+					throw new SqlGatewayException("Directory expected: " + dir);
+				} else if (!dir.canRead()) {
+					throw new SqlGatewayException("Directory cannot be read: " + dir);
+				}
+				final File[] files = dir.listFiles();
+				if (files == null) {
+					throw new SqlGatewayException("Directory cannot be read: " + dir);
+				}
+				for (File f : files) {
+					// only consider jars
+					if (f.isFile() && f.getAbsolutePath().toLowerCase().endsWith(".jar")) {
+						final URL url = f.toURI().toURL();
+						JarUtils.checkJarFile(url);
+						dependencies.add(url);
+					}
+				}
+			}
+		} catch (Exception e) {
+			throw new SqlGatewayException("Could not load all required JAR files.", e);
+		}
+
+		if (LOG.isDebugEnabled()) {
+			LOG.debug("Using the following dependencies: {}", dependencies);
+		}
+
+		return dependencies;
 	}
 
 	// --------------------------------------------------------------------------------------------

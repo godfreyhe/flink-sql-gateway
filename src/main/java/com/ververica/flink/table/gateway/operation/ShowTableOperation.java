@@ -18,12 +18,15 @@
 
 package com.ververica.flink.table.gateway.operation;
 
-import com.ververica.flink.table.gateway.Executor;
+import com.ververica.flink.table.gateway.config.entries.TableEntry;
 import com.ververica.flink.table.gateway.config.entries.ViewEntry;
+import com.ververica.flink.table.gateway.context.ExecutionContext;
+import com.ververica.flink.table.gateway.context.SessionContext;
 import com.ververica.flink.table.gateway.rest.result.ColumnInfo;
 import com.ververica.flink.table.gateway.rest.result.ConstantNames;
 import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
+import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.types.logical.VarCharType;
 import org.apache.flink.types.Row;
 
@@ -36,12 +39,10 @@ import java.util.Map;
  * Operation for SHOW TABLE command.
  */
 public class ShowTableOperation implements NonJobOperation {
-	private final String sessionId;
-	private final Executor executor;
+	private final ExecutionContext<?> context;
 
-	public ShowTableOperation(String sessionId, Executor executor) {
-		this.sessionId = sessionId;
-		this.executor = executor;
+	public ShowTableOperation(SessionContext context) {
+		this.context = context.getExecutionContext();
 	}
 
 	@Override
@@ -49,15 +50,18 @@ public class ShowTableOperation implements NonJobOperation {
 		List<Row> rows = new ArrayList<>();
 		int maxNameLength = 1;
 		List<String> views = new ArrayList<>();
-		for (Map.Entry<String, ViewEntry> entry : executor.listViews(sessionId).entrySet()) {
-			String name = entry.getKey();
-			rows.add(Row.of(name, ConstantNames.VIEW_TYPE));
-			maxNameLength = Math.max(maxNameLength, name.length());
-			views.add(name);
+		for (Map.Entry<String, TableEntry> entry : context.getEnvironment().getTables().entrySet()) {
+			if (entry.getValue() instanceof ViewEntry) {
+				String name = entry.getKey();
+				rows.add(Row.of(name, ConstantNames.VIEW_TYPE));
+				maxNameLength = Math.max(maxNameLength, name.length());
+				views.add(name);
+			}
 		}
 
+		final TableEnvironment tableEnv = context.getTableEnvironment();
 		// listTables will return all tables and views
-		for (String table : executor.listTables(sessionId)) {
+		for (String table : context.wrapClassLoader(() -> Arrays.asList(tableEnv.listTables()))) {
 			if (!views.contains(table)) {
 				rows.add(Row.of(table, ConstantNames.TABLE_TYPE));
 				maxNameLength = Math.max(maxNameLength, table.length());

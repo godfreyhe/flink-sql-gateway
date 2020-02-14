@@ -18,11 +18,15 @@
 
 package com.ververica.flink.table.gateway.operation;
 
-import com.ververica.flink.table.gateway.Executor;
+import com.ververica.flink.table.gateway.SqlExecutionException;
+import com.ververica.flink.table.gateway.context.ExecutionContext;
+import com.ververica.flink.table.gateway.context.SessionContext;
 import com.ververica.flink.table.gateway.rest.result.ColumnInfo;
 import com.ververica.flink.table.gateway.rest.result.ConstantNames;
 import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
+import org.apache.flink.table.api.Table;
+import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.types.logical.VarCharType;
 import org.apache.flink.types.Row;
 
@@ -32,22 +36,41 @@ import java.util.Collections;
  * Operation for EXPLAIN command.
  */
 public class ExplainOperation implements NonJobOperation {
-	private final String stmt;
-	private final String sessionId;
-	private final Executor executor;
+	private final ExecutionContext<?> context;
+	private final String statement;
 
-	public ExplainOperation(String stmt, String sessionId, Executor executor) {
-		this.stmt = stmt;
-		this.sessionId = sessionId;
-		this.executor = executor;
+	public ExplainOperation(SessionContext context, String statement) {
+		this.context = context.getExecutionContext();
+		this.statement = statement;
 	}
 
 	@Override
 	public ResultSet execute() {
-		String explanation = executor.explainStatement(sessionId, stmt);
-		return new ResultSet(
-			Collections.singletonList(
-				ColumnInfo.create(ConstantNames.EXPLANATION, new VarCharType(false, explanation.length()))),
-			Collections.singletonList(Row.of(explanation)));
+		final TableEnvironment tableEnv = context.getTableEnvironment();
+		// translate
+		try {
+			final Table table = createTable(context, tableEnv, statement);
+			String explanation = context.wrapClassLoader(() -> tableEnv.explain(table));
+			return new ResultSet(
+				Collections.singletonList(
+					ColumnInfo.create(ConstantNames.EXPLANATION, new VarCharType(false, explanation.length()))),
+				Collections.singletonList(Row.of(explanation)));
+		} catch (Throwable t) {
+			// catch everything such that the query does not crash the executor
+			throw new SqlExecutionException("Invalid SQL statement.", t);
+		}
+	}
+
+	/**
+	 * Creates a table using the given query in the given table environment.
+	 */
+	private <C> Table createTable(ExecutionContext<C> context, TableEnvironment tableEnv, String selectQuery) {
+		// parse and validate query
+		try {
+			return context.wrapClassLoader(() -> tableEnv.sqlQuery(selectQuery));
+		} catch (Throwable t) {
+			// catch everything such that the query does not crash the executor
+			throw new SqlExecutionException("Invalid SQL statement.", t);
+		}
 	}
 }

@@ -18,24 +18,30 @@
 
 package com.ververica.flink.table.gateway.operation;
 
-import com.ververica.flink.table.gateway.Executor;
+import com.ververica.flink.table.gateway.context.ExecutionContext;
+import com.ververica.flink.table.gateway.context.SessionContext;
 import com.ververica.flink.table.gateway.rest.result.ConstantNames;
 import com.ververica.flink.table.gateway.rest.result.ResultSet;
+
+import org.apache.flink.table.api.TableEnvironment;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Operation for SHOW MODULE command.
  */
 public class ShowModuleOperation implements NonJobOperation {
-	private final String sessionId;
-	private final Executor executor;
+	private final ExecutionContext<?> context;
 
-	public ShowModuleOperation(String sessionId, Executor executor) {
-		this.sessionId = sessionId;
-		this.executor = executor;
+	public ShowModuleOperation(SessionContext context) {
+		this.context = context.getExecutionContext();
 	}
 
 	@Override
 	public ResultSet execute() {
-		return OperationUtil.stringListToResultSet(executor.listModules(sessionId), ConstantNames.MODULES);
+		final TableEnvironment tableEnv = context.getTableEnvironment();
+		final List<String> modules = context.wrapClassLoader(() -> Arrays.asList(tableEnv.listModules()));
+		return OperationUtil.stringListToResultSet(modules, ConstantNames.MODULES);
 	}
 }

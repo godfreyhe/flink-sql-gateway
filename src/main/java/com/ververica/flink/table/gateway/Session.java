@@ -19,6 +19,7 @@
 package com.ververica.flink.table.gateway;
 
 import com.ververica.flink.table.gateway.SqlCommandParser.SqlCommandCall;
+import com.ververica.flink.table.gateway.context.SessionContext;
 import com.ververica.flink.table.gateway.operation.JobOperation;
 import com.ververica.flink.table.gateway.operation.Operation;
 import com.ververica.flink.table.gateway.operation.OperationFactory;
@@ -42,24 +43,20 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Session {
 	private static final Logger LOG = LoggerFactory.getLogger(Session.class);
 
-	private final SessionContext ctx;
+	private final SessionContext context;
 	private final String sessionId;
-	private final Executor executor;
 
 	private long lastVisitedTime;
 
 	private final Map<JobID, JobOperation> jobOperations;
 
-	public Session(SessionContext ctx, Executor executor) {
-		this.ctx = ctx;
-		this.sessionId = ctx.getSessionId();
-		this.executor = executor;
+	public Session(SessionContext context) {
+		this.context = context;
+		this.sessionId = context.getSessionId();
 
 		this.lastVisitedTime = System.currentTimeMillis();
 
 		this.jobOperations = new ConcurrentHashMap<>();
-
-		executor.openSession(ctx);
 	}
 
 	public void touch() {
@@ -70,8 +67,8 @@ public class Session {
 		return lastVisitedTime;
 	}
 
-	public SessionContext getSessionContext() {
-		return ctx;
+	public SessionContext getContext() {
+		return context;
 	}
 
 	public Tuple2<ResultSet, SqlCommandParser.SqlCommand> runStatement(String statement) throws SqlGatewayException {
@@ -83,7 +80,7 @@ public class Session {
 		}
 
 		SqlCommandCall call = callOpt.get();
-		Operation operation = OperationFactory.createOperation(call, sessionId, executor);
+		Operation operation = OperationFactory.createOperation(call, context);
 		ResultSet resultSet = operation.execute();
 
 		if (operation instanceof JobOperation) {
@@ -122,7 +119,4 @@ public class Session {
 		}
 	}
 
-	public void close() {
-		executor.closeSession(sessionId);
-	}
 }

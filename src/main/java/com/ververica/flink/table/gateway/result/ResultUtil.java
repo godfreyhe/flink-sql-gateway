@@ -18,7 +18,6 @@
 
 package com.ververica.flink.table.gateway.result;
 
-import com.ververica.flink.table.gateway.SqlExecutionException;
 import com.ververica.flink.table.gateway.SqlGatewayException;
 import com.ververica.flink.table.gateway.config.Environment;
 import com.ververica.flink.table.gateway.config.entries.DeploymentEntry;
@@ -35,90 +34,57 @@ import org.apache.flink.table.runtime.types.TypeInfoDataTypeConverter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 /**
- * Maintains dynamic results.
+ * Utility class to create {@link Result}.
  */
-public class ResultStore {
+public class ResultUtil {
 
-	private final Configuration flinkConfig;
-	private final Map<String, DynamicResult<?>> results;
+	public static <C> BatchResult<C> createBatchResult(
+		TableSchema schema,
+		ExecutionConfig config,
+		ClassLoader classLoader) {
+		final TypeInformation[] schemaTypeInfos = Stream.of(schema.getFieldDataTypes())
+			.map(TypeInfoDataTypeConverter::fromDataTypeToTypeInfo)
+			.toArray(TypeInformation[]::new);
+		final RowTypeInfo outputType = new RowTypeInfo(schemaTypeInfos, schema.getFieldNames());
 
-	public ResultStore(Configuration flinkConfig) {
-		this.flinkConfig = flinkConfig;
-		results = new HashMap<>();
+		return new BatchResult<>(schema, outputType, config, classLoader);
 	}
 
-	/**
-	 * Creates a result. Might start threads or opens sockets so every created result must be closed.
-	 */
-	public <T> DynamicResult<T> createResult(
+	public static <C> ChangelogResult<C> createChangelogResult(
+		Configuration flinkConfig,
 		Environment env,
 		TableSchema schema,
 		ExecutionConfig config,
 		ClassLoader classLoader) {
-
 		final TypeInformation[] schemaTypeInfos = Stream.of(schema.getFieldDataTypes())
-				.map(TypeInfoDataTypeConverter::fromDataTypeToTypeInfo)
-				.toArray(TypeInformation[]::new);
+			.map(TypeInfoDataTypeConverter::fromDataTypeToTypeInfo)
+			.toArray(TypeInformation[]::new);
 		final RowTypeInfo outputType = new RowTypeInfo(schemaTypeInfos, schema.getFieldNames());
 
-		if (env.getExecution().inStreamingMode()) {
-			// determine gateway address (and port if possible)
-			final InetAddress gatewayAddress = getGatewayAddress(env.getDeployment());
-			final int gatewayPort = getGatewayPort(env.getDeployment());
+		// determine gateway address (and port if possible)
+		final InetAddress gatewayAddress = getGatewayAddress(env.getDeployment(), flinkConfig);
+		final int gatewayPort = getGatewayPort(env.getDeployment());
 
-			if (env.getExecution().isChangelogMode()) {
-				return new ChangelogCollectStreamResult<>(
-					outputType,
-					schema,
-					config,
-					gatewayAddress,
-					gatewayPort,
-					classLoader);
-			} else {
-				throw new SqlExecutionException("Results of streaming queries can only be served in changelog mode.");
-			}
-
-		} else {
-			// Batch Execution
-			if (!env.getExecution().isTableMode()) {
-				throw new SqlExecutionException("Results of batch queries can only be served in table mode.");
-			}
-			return new MaterializedCollectBatchResult<>(schema, outputType, config, classLoader);
-		}
-	}
-
-	public void storeResult(String resultId, DynamicResult result) {
-		results.put(resultId, result);
-	}
-
-	@SuppressWarnings("unchecked")
-	public <T> DynamicResult<T> getResult(String resultId) {
-		return (DynamicResult<T>) results.get(resultId);
-	}
-
-	public void removeResult(String resultId) {
-		results.remove(resultId);
-	}
-
-	public List<String> getResults() {
-		return new ArrayList<>(results.keySet());
+		return new ChangelogResult<>(
+			outputType,
+			schema,
+			config,
+			gatewayAddress,
+			gatewayPort,
+			classLoader);
 	}
 
 	// --------------------------------------------------------------------------------------------
 
-	private int getGatewayPort(DeploymentEntry deploy) {
+	private static int getGatewayPort(DeploymentEntry deploy) {
 		// try to get address from deployment configuration
 		return deploy.getGatewayPort();
 	}
 
-	private InetAddress getGatewayAddress(DeploymentEntry deploy) {
+	private static InetAddress getGatewayAddress(DeploymentEntry deploy, Configuration flinkConfig) {
 		// try to get address from deployment configuration
 		final String address = deploy.getGatewayAddress();
 

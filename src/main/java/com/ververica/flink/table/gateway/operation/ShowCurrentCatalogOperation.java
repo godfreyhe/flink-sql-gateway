@@ -18,27 +18,26 @@
 
 package com.ververica.flink.table.gateway.operation;
 
-import com.ververica.flink.table.gateway.Executor;
-import com.ververica.flink.table.gateway.ExecutorImpl;
+import com.ververica.flink.table.gateway.context.ExecutionContext;
+import com.ververica.flink.table.gateway.context.SessionContext;
 import com.ververica.flink.table.gateway.rest.result.ConstantNames;
 import com.ververica.flink.table.gateway.rest.result.ResultSet;
+
+import org.apache.flink.table.api.TableEnvironment;
 
 /**
  * Operation for SHOW CURRENT CATALOG command.
  */
 public class ShowCurrentCatalogOperation implements NonJobOperation {
-	private final String sessionId;
-	private final Executor executor;
+	private final ExecutionContext<?> context;
 
-	public ShowCurrentCatalogOperation(String sessionId, Executor executor) {
-		this.sessionId = sessionId;
-		this.executor = executor;
+	public ShowCurrentCatalogOperation(SessionContext context) {
+		this.context = context.getExecutionContext();
 	}
 
 	@Override
 	public ResultSet execute() {
-		return OperationUtil.singleStringToResultSet(
-			((ExecutorImpl) executor).getExecutionContext(sessionId).getTableEnvironment().getCurrentCatalog(),
-			ConstantNames.CATALOG);
+		final TableEnvironment tableEnv = context.getTableEnvironment();
+		return OperationUtil.singleStringToResultSet(tableEnv.getCurrentCatalog(), ConstantNames.CATALOG);
 	}
 }

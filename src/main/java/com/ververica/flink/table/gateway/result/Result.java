@@ -18,16 +18,42 @@
 
 package com.ververica.flink.table.gateway.result;
 
+import org.apache.flink.core.execution.JobClient;
+import org.apache.flink.table.sinks.TableSink;
+
+import java.util.List;
+
 /**
  * A result of a table program submission to a cluster.
  *
  * @param <C> type of the cluster id to which this result belongs to
+ * @param <R> type of result data
  */
-public interface Result<C> {
+public interface Result<C, R> {
 
 	/**
 	 * Sets the cluster information of the cluster this result comes from. This method should only be called once.
 	 */
 	void setClusterInformation(C clusterId, String webInterfaceUrl);
+
+	/**
+	 * Starts the table program using the given deployer and monitors it's execution.
+	 */
+	void startRetrieval(JobClient jobClient);
+
+	/**
+	 * Retrieves the available result records.
+	 */
+	TypedResult<List<R>> retrieveChanges();
+
+	/**
+	 * Returns the table sink required by this result type.
+	 */
+	TableSink<?> getTableSink();
+
+	/**
+	 * Closes the retrieval and all involved threads.
+	 */
+	void close();
 
 }

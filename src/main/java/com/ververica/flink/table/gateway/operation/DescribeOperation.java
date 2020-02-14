@@ -18,18 +18,19 @@
 
 package com.ververica.flink.table.gateway.operation;
 
-import com.ververica.flink.table.gateway.Executor;
+import com.ververica.flink.table.gateway.SqlExecutionException;
 import com.ververica.flink.table.gateway.SqlGatewayException;
+import com.ververica.flink.table.gateway.context.ExecutionContext;
+import com.ververica.flink.table.gateway.context.SessionContext;
 import com.ververica.flink.table.gateway.rest.result.ColumnInfo;
 import com.ververica.flink.table.gateway.rest.result.ConstantNames;
 import com.ververica.flink.table.gateway.rest.result.ResultSet;
 import com.ververica.flink.table.gateway.rest.result.TableSchemaUtil;
 
+import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.types.logical.VarCharType;
 import org.apache.flink.types.Row;
-
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,32 +40,30 @@ import java.util.List;
  * Operation for DESCRIBE command.
  */
 public class DescribeOperation implements NonJobOperation {
-	private final String name;
-	private final String sessionId;
-	private final Executor executor;
+	private final ExecutionContext<?> context;
+	private final String tableName;
 
-	public DescribeOperation(String name, String sessionId, Executor executor) {
-		this.name = name;
-		this.sessionId = sessionId;
-		this.executor = executor;
+	public DescribeOperation(SessionContext context, String tableName) {
+		this.context = context.getExecutionContext();
+		this.tableName = tableName;
 	}
 
 	@Override
 	public ResultSet execute() throws SqlGatewayException {
-		TableSchema schema = executor.getTableSchema(sessionId, name);
-		String schemaJson;
+		final TableEnvironment tableEnv = context.getTableEnvironment();
 		try {
-			schemaJson = TableSchemaUtil.writeTableSchemaToJson(schema);
-		} catch (JsonProcessingException e) {
-			throw new SqlGatewayException("Failed to serialize TableSchema to json", e);
+			TableSchema schema = context.wrapClassLoader(() -> tableEnv.scan(tableName).getSchema());
+			String schemaJson = TableSchemaUtil.writeTableSchemaToJson(schema);
+			int length = schemaJson.length();
+			List<Row> data = new ArrayList<>();
+			data.add(Row.of(schemaJson));
+
+			return new ResultSet(
+				Collections.singletonList(ColumnInfo.create(ConstantNames.SCHEMA, new VarCharType(true, length))),
+				data);
+		} catch (Throwable t) {
+			// catch everything such that the query does not crash the executor
+			throw new SqlExecutionException("No table with this name could be found.", t);
 		}
-
-		int length = schemaJson.length();
-		List<Row> data = new ArrayList<>();
-		data.add(Row.of(schemaJson));
-
-		return new ResultSet(
-			Collections.singletonList(ColumnInfo.create(ConstantNames.SCHEMA, new VarCharType(true, length))),
-			data);
 	}
 }

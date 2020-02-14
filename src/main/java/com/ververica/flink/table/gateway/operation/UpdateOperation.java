@@ -18,26 +18,45 @@
 
 package com.ververica.flink.table.gateway.operation;
 
-import com.ververica.flink.table.gateway.Executor;
+import com.ververica.flink.table.gateway.SqlExecutionException;
+import com.ververica.flink.table.gateway.context.ExecutionContext;
+import com.ververica.flink.table.gateway.context.SessionContext;
 import com.ververica.flink.table.gateway.rest.result.ResultSet;
+
+import org.apache.flink.table.api.StreamQueryConfig;
+import org.apache.flink.table.api.TableEnvironment;
+import org.apache.flink.table.api.java.StreamTableEnvironment;
 
 /**
  * Operation for CREATE/DROP DATABASE and ALTER DATABASE/TABLE command.
  */
 public class UpdateOperation implements NonJobOperation {
-	private final String stmt;
-	private final String sessionId;
-	private final Executor executor;
+	private final ExecutionContext<?> context;
+	private final String updateStmt;
 
-	public UpdateOperation(String stmt, String sessionId, Executor executor) {
-		this.stmt = stmt;
-		this.sessionId = sessionId;
-		this.executor = executor;
+	public UpdateOperation(SessionContext context, String updateStmt) {
+		this.context = context.getExecutionContext();
+		this.updateStmt = updateStmt;
 	}
 
 	@Override
 	public ResultSet execute() {
-		executor.executeUpdate(sessionId, stmt);
+		final TableEnvironment tEnv = context.getTableEnvironment();
+		// parse and validate statement
+		try {
+			context.wrapClassLoader(() -> {
+				if (tEnv instanceof StreamTableEnvironment) {
+					((StreamTableEnvironment) tEnv).sqlUpdate(updateStmt, (StreamQueryConfig) context.getQueryConfig());
+				} else {
+					tEnv.sqlUpdate(updateStmt);
+				}
+				return null;
+			});
+		} catch (Throwable t) {
+			// catch everything such that the statement does not crash the executor
+			throw new SqlExecutionException("Invalid SQL update statement.", t);
+		}
+
 		return OperationUtil.AFFECTED_ROW_COUNT0;
 	}
 }

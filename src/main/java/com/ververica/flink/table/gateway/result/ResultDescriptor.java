@@ -16,46 +16,45 @@
  * limitations under the License.
  */
 
-package com.ververica.flink.table.gateway;
+package com.ververica.flink.table.gateway.result;
 
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.table.api.TableSchema;
-
-import java.util.Optional;
 
 /**
  * Describes a result to be expected from a table program.
  */
 public class ResultDescriptor {
 
-	private final String resultId;
+	private final Result<?, ?> result;
+
+	private boolean isChangelogResult;
 
 	private final TableSchema resultSchema;
 
-	private final boolean isMaterialized;
-
 	private final JobClient jobClient;
 
-	public ResultDescriptor(String resultId, TableSchema resultSchema, boolean isMaterialized, JobClient jobClient) {
-		this.resultId = resultId;
+	public ResultDescriptor(Result<?, ?> result, boolean isChangelogResult, TableSchema resultSchema, JobClient jobClient) {
+		this.result = result;
+		this.isChangelogResult = isChangelogResult;
 		this.resultSchema = resultSchema;
-		this.isMaterialized = isMaterialized;
 		this.jobClient = jobClient;
 	}
 
-	public String getResultId() {
-		return resultId;
+	public Result<?, ?> getResult() {
+		return result;
+	}
+
+	public boolean isChangelogResult() {
+		return isChangelogResult;
 	}
 
 	public TableSchema getResultSchema() {
 		return resultSchema;
 	}
 
-	public boolean isMaterialized() {
-		return isMaterialized;
+	public JobClient getJobClient() {
+		return jobClient;
 	}
 
-	public Optional<JobClient> getJobClient() {
-		return Optional.ofNullable(jobClient);
-	}
 }

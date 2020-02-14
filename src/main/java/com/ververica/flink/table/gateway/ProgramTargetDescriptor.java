@@ -41,9 +41,7 @@ public class ProgramTargetDescriptor {
 	}
 
 	public void cancel() {
-		if (jobClient != null) {
-			jobClient.cancel();
-		}
+		jobClient.cancel();
 	}
 
 	@Override

@@ -20,6 +20,8 @@ package com.ververica.flink.table.gateway;
 
 import com.ververica.flink.table.gateway.config.Environment;
 import com.ververica.flink.table.gateway.config.entries.ExecutionEntry;
+import com.ververica.flink.table.gateway.context.DefaultContext;
+import com.ververica.flink.table.gateway.context.SessionContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,8 +41,7 @@ import java.util.concurrent.TimeUnit;
 public class SessionManager {
 	private static final Logger LOG = LoggerFactory.getLogger(SessionManager.class);
 
-	private final Environment defaultEnvironment;
-	private final Executor executor;
+	private final DefaultContext defaultContext;
 
 	private final long idleTimeout;
 	private final long checkInterval;
@@ -51,17 +52,16 @@ public class SessionManager {
 	private ScheduledExecutorService executorService;
 	private ScheduledFuture timeoutCheckerFuture;
 
-	public SessionManager(Environment defaultEnv, Executor executor) {
-		this.defaultEnvironment = defaultEnv;
-		this.executor = executor;
-		this.idleTimeout = defaultEnv.getSession().getIdleTimeout();
-		this.checkInterval = defaultEnv.getSession().getCheckInterval();
-		this.maxCount = defaultEnv.getSession().getMaxCount();
+	public SessionManager(DefaultContext defaultContext) {
+		this.defaultContext = defaultContext;
+		Environment env = defaultContext.getDefaultEnv();
+		this.idleTimeout = env.getSession().getIdleTimeout();
+		this.checkInterval = env.getSession().getCheckInterval();
+		this.maxCount = env.getSession().getMaxCount();
 		this.sessions = new ConcurrentHashMap<>();
 	}
 
 	public void open() {
-		executor.start();
 		if (checkInterval > 0 && idleTimeout > 0) {
 			executorService = Executors.newSingleThreadScheduledExecutor();
 			timeoutCheckerFuture = executorService.scheduleAtFixedRate(() -> {
@@ -111,11 +111,13 @@ public class SessionManager {
 				ExecutionEntry.EXECUTION_RESULT_MODE_VALUE_CHANGELOG);
 		}
 
-		Environment sessionEnv = Environment.enrich(defaultEnvironment, newProperties, Collections.emptyMap());
+		Environment sessionEnv = Environment.enrich(
+			defaultContext.getDefaultEnv(), newProperties, Collections.emptyMap());
 
 		String sessionId = SessionID.generate().toHexString();
-		SessionContext ctx = new SessionContext(sessionName, sessionId, sessionEnv);
-		Session session = new Session(ctx, executor);
+		SessionContext sessionContext = new SessionContext(sessionName, sessionId, sessionEnv, defaultContext);
+
+		Session session = new Session(sessionContext);
 		sessions.put(sessionId, session);
 
 		LOG.info(String.format(
@@ -131,8 +133,7 @@ public class SessionManager {
 	}
 
 	private void closeSession(Session session) {
-		String sessionId = session.getSessionContext().getSessionId();
-		session.close();
+		String sessionId = session.getContext().getSessionId();
 		sessions.remove(sessionId);
 		LOG.info(String.format("Session: %s is closed.", sessionId));
 	}
