@@ -18,26 +18,33 @@
 
 package com.ververica.flink.table.gateway.operation;
 
-import com.ververica.flink.table.gateway.Executor;
+import com.ververica.flink.table.gateway.SqlExecutionException;
+import com.ververica.flink.table.gateway.context.ExecutionContext;
+import com.ververica.flink.table.gateway.context.SessionContext;
 import com.ververica.flink.table.gateway.rest.result.ResultSet;
+
+import org.apache.flink.table.api.TableEnvironment;
 
 /**
  * Operation for DROP TABLE command.
  */
 public class DropTableOperation implements NonJobOperation {
+	private final ExecutionContext<?> context;
 	private final String ddl;
-	private final String sessionId;
-	private final Executor executor;
 
-	public DropTableOperation(String ddl, String sessionId, Executor executor) {
+	public DropTableOperation(SessionContext context, String ddl) {
+		this.context = context.getExecutionContext();
 		this.ddl = ddl;
-		this.sessionId = sessionId;
-		this.executor = executor;
 	}
 
 	@Override
 	public ResultSet execute() {
-		executor.dropTable(sessionId, ddl);
+		final TableEnvironment tEnv = context.getTableEnvironment();
+		try {
+			tEnv.sqlUpdate(ddl);
+		} catch (Exception e) {
+			throw new SqlExecutionException("Could not drop table from statement: " + ddl, e);
+		}
 		return OperationUtil.AFFECTED_ROW_COUNT0;
 	}
 }

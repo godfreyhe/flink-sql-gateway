@@ -19,12 +19,16 @@
 package com.ververica.flink.table.gateway.operation;
 
 import com.ververica.flink.table.gateway.SqlGatewayException;
+import com.ververica.flink.table.gateway.context.SessionContext;
 import com.ververica.flink.table.gateway.rest.result.ColumnInfo;
 import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.types.Row;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 
@@ -35,13 +39,17 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Abstract Operation.
+ * A default implementation of JobOperation.
  */
 public abstract class AbstractJobOperation implements JobOperation {
+	private static final Logger LOG = LoggerFactory.getLogger(AbstractJobOperation.class);
+
+	protected final SessionContext context;
+	protected final String sessionId;
 	protected volatile JobID jobId;
 
 	private long currentToken;
-	private int previousFetchSize;
+	private int previousMaxFetchSize;
 	private int previousResultSetSize;
 	private LinkedList<Row> bufferedResults;
 	@Nullable
@@ -50,13 +58,24 @@ public abstract class AbstractJobOperation implements JobOperation {
 
 	protected final Object lock = new Object();
 
-	public AbstractJobOperation() {
+	public AbstractJobOperation(SessionContext context) {
+		this.context = context;
+		this.sessionId = context.getSessionId();
 		this.currentToken = 0;
-		this.previousFetchSize = 0;
+		this.previousMaxFetchSize = 0;
 		this.previousResultSetSize = 0;
 		this.bufferedResults = new LinkedList<>();
 		this.bufferedChangeFlags = null;
 		this.noMoreResults = false;
+	}
+
+	protected String getJobName(String statement) {
+		Optional<String> sessionName = context.getSessionName();
+		if (sessionName.isPresent()) {
+			return String.format("{}:{}:{}", sessionName.get(), sessionId, statement);
+		} else {
+			return String.format("{}:{}", sessionId, statement);
+		}
 	}
 
 	@Override
@@ -71,6 +90,9 @@ public abstract class AbstractJobOperation implements JobOperation {
 	public synchronized Optional<ResultSet> getJobResult(long token, int maxFetchSize) throws SqlGatewayException {
 		if (token == currentToken) {
 			if (noMoreResults) {
+				if (LOG.isDebugEnabled()) {
+					LOG.debug("Session: {}. There is no more result for job: {}", sessionId, jobId);
+				}
 				return Optional.empty();
 			}
 
@@ -104,19 +126,42 @@ public abstract class AbstractJobOperation implements JobOperation {
 				currentToken++;
 			}
 
-			previousFetchSize = maxFetchSize;
+			previousMaxFetchSize = maxFetchSize;
 			if (maxFetchSize > 0) {
 				previousResultSetSize = Math.min(bufferedResults.size(), maxFetchSize);
 			} else {
 				previousResultSetSize = bufferedResults.size();
 			}
+			if (LOG.isDebugEnabled()) {
+				LOG.debug(
+					"Session: {}. Fetching current result for job: {}, token: {}, maxFetchSize: {}, realReturnSize: {}.",
+					sessionId, jobId, token, maxFetchSize, previousResultSetSize);
+			}
 		} else if (token == currentToken - 1 && token >= 0) {
-			if (previousFetchSize != maxFetchSize) {
-				throw new SqlGatewayException("As the same token is provided, fetch size must be the same.");
+			if (LOG.isDebugEnabled()) {
+				LOG.debug("Session: {}. Fetching previous result for job: {}, token: {}, maxFetchSize: ",
+					sessionId, jobId, token, maxFetchSize);
+			}
+			if (previousMaxFetchSize != maxFetchSize) {
+				String msg = String.format(
+					"As the same token is provided, fetch size must be the same. Expecting max_fetch_size to be %s.",
+					previousMaxFetchSize);
+				if (LOG.isDebugEnabled()) {
+					LOG.error(String.format("Session: %s. %s", sessionId, msg));
+				}
+				throw new SqlGatewayException(msg);
 			}
 		} else {
-			throw new SqlGatewayException(
-				"Expecting token to be " + currentToken + " or " + (currentToken - 1) + ", but found " + token + ".");
+			String msg;
+			if (currentToken == 0) {
+				msg = "Expecting token to be 0, but found " + token + ".";
+			} else {
+				msg = "Expecting token to be " + currentToken + " or " + (currentToken - 1) + ", but found " + token + ".";
+			}
+			if (LOG.isDebugEnabled()) {
+				LOG.error(String.format("Session: %s. %s", sessionId, msg));
+			}
+			throw new SqlGatewayException(msg);
 		}
 
 		return Optional.of(new ResultSet(

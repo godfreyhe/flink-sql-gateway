@@ -18,13 +18,17 @@
 
 package com.ververica.flink.table.gateway.operation;
 
-import com.ververica.flink.table.gateway.Executor;
+import com.ververica.flink.table.gateway.config.Environment;
+import com.ververica.flink.table.gateway.context.ExecutionContext;
+import com.ververica.flink.table.gateway.context.SessionContext;
 import com.ververica.flink.table.gateway.rest.result.ColumnInfo;
 import com.ververica.flink.table.gateway.rest.result.ConstantNames;
 import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
 import org.apache.flink.table.types.logical.VarCharType;
 import org.apache.flink.types.Row;
+
+import org.apache.flink.shaded.guava18.com.google.common.collect.ImmutableMap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,41 +39,63 @@ import java.util.Map;
  * Operation for SET command.
  */
 public class SetOperation implements NonJobOperation {
+	private final SessionContext context;
 	private final String key;
 	private final String value;
-	private final String sessionId;
-	private final Executor executor;
 
-	public SetOperation(String key, String value, String sessionId, Executor executor) {
+	public SetOperation(SessionContext context, String key, String value) {
+		this.context = context;
 		this.key = key;
 		this.value = value;
-		this.sessionId = sessionId;
-		this.executor = executor;
+	}
+
+	public SetOperation(SessionContext context) {
+		this(context, null, null);
 	}
 
 	@Override
 	public ResultSet execute() {
+		ExecutionContext<?> executionContext = context.getExecutionContext();
+		Environment env = executionContext.getEnvironment();
+
 		// list all properties
 		if (key == null) {
-			Map<String, String> properties = executor.getSessionProperties(sessionId);
-			List<Row> data = new ArrayList<>(properties.size());
-			int maxKeyLen = 1, maxValueLen = 1;
-			for (Map.Entry<String, String> entry : properties.entrySet()) {
-				String key = entry.getKey();
-				String value = entry.getValue();
-				data.add(Row.of(key, value));
-				maxKeyLen = Math.max(maxKeyLen, key.length());
-				maxValueLen = Math.max(maxValueLen, value.length());
-			}
+			List<Row> data = new ArrayList<>();
+			Integer maxKeyLen = 1, maxValueLen = 1;
+			buildResult(env.getExecution().asTopLevelMap(), data, maxKeyLen, maxValueLen);
+			buildResult(env.getDeployment().asTopLevelMap(), data, maxKeyLen, maxValueLen);
+			buildResult(env.getConfiguration().asMap(), data, maxKeyLen, maxValueLen);
+
 			return new ResultSet(
 				Arrays.asList(
 					ColumnInfo.create(ConstantNames.KEY, new VarCharType(true, maxKeyLen)),
 					ColumnInfo.create(ConstantNames.VALUE, new VarCharType(true, maxValueLen))),
 				data);
 		} else {
+			// TODO avoid to build a new Environment for some cases
 			// set a property
-			executor.setSessionProperty(sessionId, key, value);
+			Environment newEnv = Environment.enrich(env, ImmutableMap.of(key, value), ImmutableMap.of());
+			// Renew the ExecutionContext by new environment.
+			// Book keep all the session states of current ExecutionContext then
+			// re-register them into the new one.
+			ExecutionContext<?> newExecutionContext = context
+				.createExecutionContextBuilder(context.getOriginalSessionEnv())
+				.env(newEnv)
+				.sessionState(executionContext.getSessionState())
+				.build();
+			context.setExecutionContext(newExecutionContext);
+
 			return OperationUtil.AFFECTED_ROW_COUNT0;
+		}
+	}
+
+	private void buildResult(Map<String, String> properties, List<Row> data, Integer maxKeyLen, Integer maxValueLen) {
+		for (Map.Entry<String, String> entry : properties.entrySet()) {
+			String key = entry.getKey();
+			String value = entry.getValue();
+			data.add(Row.of(key, value));
+			maxKeyLen = Math.max(maxKeyLen, key.length());
+			maxValueLen = Math.max(maxValueLen, value.length());
 		}
 	}
 }

@@ -18,91 +18,87 @@
 
 package com.ververica.flink.table.gateway.operation;
 
-import com.ververica.flink.table.gateway.Executor;
 import com.ververica.flink.table.gateway.SqlCommandParser.SqlCommandCall;
+import com.ververica.flink.table.gateway.context.SessionContext;
 
 /**
  * The factory to create {@link Operation} based on {@link SqlCommandCall}.
  */
 public class OperationFactory {
 
-	public static Operation createOperation(
-		SqlCommandCall call,
-		String sessionId,
-		Executor executor) {
+	public static Operation createOperation(SqlCommandCall call, SessionContext context) {
 
 		Operation operation;
 		switch (call.command) {
 			case SELECT:
-				operation = new SelectOperation(call.operands[0], sessionId, executor);
+				operation = new SelectOperation(context, call.operands[0]);
 				break;
 			case CREATE_TABLE:
-				operation = new CreateTableOperation(call.operands[0], sessionId, executor);
+				operation = new CreateTableOperation(context, call.operands[0]);
 				break;
 			case DROP_TABLE:
-				operation = new DropTableOperation(call.operands[0], sessionId, executor);
+				operation = new DropTableOperation(context, call.operands[0]);
 				break;
 			case CREATE_VIEW:
-				operation = new CreateViewOperation(
-					call.operands[0], call.operands[1], sessionId, executor);
+				operation = new CreateViewOperation(context, call.operands[0], call.operands[1]);
 				break;
 			case DROP_VIEW:
-				operation = new DropViewOperation(call.operands[0], sessionId, executor);
+				operation = new DropViewOperation(context, call.operands[0]);
 				break;
 			case CREATE_DATABASE:
 			case DROP_DATABASE:
 			case ALTER_DATABASE:
 			case ALTER_TABLE:
-				operation = new UpdateOperation(call.operands[0], sessionId, executor);
+				operation = new UpdateOperation(context, call.operands[0]);
 				break;
 			case SET:
 				// list all properties
 				if (call.operands.length == 0) {
-					operation = new SetOperation(null, null, sessionId, executor);
+					operation = new SetOperation(context);
 				} else {
 					// set a property
-					operation = new SetOperation(call.operands[0], call.operands[1], sessionId, executor);
+					operation = new SetOperation(context, call.operands[0], call.operands[1]);
 				}
 				break;
 			case RESET:
-				operation = new ResetOperation(sessionId, executor);
+				operation = new ResetOperation(context);
 				break;
 			case USE_CATALOG:
-				operation = new UseCatalogOperation(call.operands[0], sessionId, executor);
+				operation = new UseCatalogOperation(context, call.operands[0]);
 				break;
 			case USE:
-				operation = new UseDatabaseOperation(call.operands[0], sessionId, executor);
+				operation = new UseDatabaseOperation(context, call.operands[0]);
 				break;
 			case INSERT_INTO:
 			case INSERT_OVERWRITE:
-				operation = new InsertOperation(call.operands[0], sessionId, executor);
+				operation = new InsertOperation(context, call.operands[0]);
 				break;
 			case SHOW_MODULES:
-				operation = new ShowModuleOperation(sessionId, executor);
+				operation = new ShowModuleOperation(context);
 				break;
 			case SHOW_CATALOGS:
-				operation = new ShowCatalogOperation(sessionId, executor);
+				operation = new ShowCatalogOperation(context);
 				break;
 			case SHOW_CURRENT_CATALOG:
-				operation = new ShowCurrentCatalogOperation(sessionId, executor);
+				operation = new ShowCurrentCatalogOperation(context);
 				break;
 			case SHOW_DATABASES:
-				operation = new ShowDatabaseOperation(sessionId, executor);
+				operation = new ShowDatabaseOperation(context);
 				break;
 			case SHOW_CURRENT_DATABASE:
-				operation = new ShowCurrentDatabaseOperation(sessionId, executor);
+				operation = new ShowCurrentDatabaseOperation(context);
 				break;
 			case SHOW_TABLES:
-				operation = new ShowTableOperation(sessionId, executor);
+				operation = new ShowTableOperation(context);
 				break;
 			case SHOW_FUNCTIONS:
-				operation = new ShowFunctionOperation(sessionId, executor);
+				operation = new ShowFunctionOperation(context);
 				break;
 			case DESCRIBE:
-				operation = new DescribeOperation(call.operands[0], sessionId, executor);
+				operation = new DescribeOperation(context, call.operands[0]);
 				break;
 			case EXPLAIN:
-				operation = new ExplainOperation(call.operands[0], sessionId, executor);
+				operation = new ExplainOperation(context, call.operands[0]);
 				break;
 			default:
 				throw new RuntimeException("Unsupported command call " + call + ". This is a bug.");

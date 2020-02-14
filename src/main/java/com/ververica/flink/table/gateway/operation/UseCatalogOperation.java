@@ -18,26 +18,40 @@
 
 package com.ververica.flink.table.gateway.operation;
 
-import com.ververica.flink.table.gateway.Executor;
+import com.ververica.flink.table.gateway.SqlExecutionException;
+import com.ververica.flink.table.gateway.context.ExecutionContext;
+import com.ververica.flink.table.gateway.context.SessionContext;
 import com.ververica.flink.table.gateway.rest.result.ResultSet;
+
+import org.apache.flink.table.api.TableEnvironment;
+import org.apache.flink.table.catalog.exceptions.CatalogException;
 
 /**
  * Operation for USE CATALOG command.
  */
 public class UseCatalogOperation implements NonJobOperation {
-	private final String name;
-	private final String sessionId;
-	private final Executor executor;
+	private final ExecutionContext<?> context;
+	private final String catalogName;
 
-	public UseCatalogOperation(String name, String sessionId, Executor executor) {
-		this.name = name;
-		this.sessionId = sessionId;
-		this.executor = executor;
+	public UseCatalogOperation(SessionContext context, String catalogName) {
+		this.context = context.getExecutionContext();
+		this.catalogName = catalogName;
 	}
 
 	@Override
 	public ResultSet execute() {
-		executor.useCatalog(sessionId, name);
+		final TableEnvironment tableEnv = context.getTableEnvironment();
+
+		context.wrapClassLoader(() -> {
+			// Rely on TableEnvironment/CatalogManager to validate input
+			try {
+				tableEnv.useCatalog(catalogName);
+				return null;
+			} catch (CatalogException e) {
+				throw new SqlExecutionException("Failed to switch to catalog " + catalogName, e);
+			}
+		});
+
 		return OperationUtil.AFFECTED_ROW_COUNT0;
 	}
 }

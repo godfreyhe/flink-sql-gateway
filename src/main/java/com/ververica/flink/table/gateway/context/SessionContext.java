@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package com.ververica.flink.table.gateway;
+package com.ververica.flink.table.gateway.context;
 
 import com.ververica.flink.table.gateway.config.Environment;
 
@@ -26,24 +26,25 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Context describing a session, it's mainly used for user to open a new session in the backend. If client request to
- * open a new session, the backend {@link Executor} will maintain a {@link ExecutionContext}
- * for it, and each interaction the client need to attach the session id.
+ * Context describing current session properties, original properties, ExecutionContext, etc.
  */
 public class SessionContext {
-
 	private final String sessionName;
 	private final String sessionId;
-	private final Environment sessionEnv;
+	private final Environment originalSessionEnv;
+	private final DefaultContext defaultContext;
+	private ExecutionContext<?> executionContext;
 
-	public SessionContext(String sessionId, Environment sessionEnv) {
-		this(null, sessionId, sessionEnv);
-	}
-
-	public SessionContext(@Nullable String sessionName, String sessionId, Environment sessionEnv) {
+	public SessionContext(
+		@Nullable String sessionName,
+		String sessionId,
+		Environment originalSessionEnv,
+		DefaultContext defaultContext) {
 		this.sessionName = sessionName;
 		this.sessionId = sessionId;
-		this.sessionEnv = sessionEnv;
+		this.originalSessionEnv = originalSessionEnv;
+		this.defaultContext = defaultContext;
+		this.executionContext = createExecutionContextBuilder(originalSessionEnv).build();
 	}
 
 	public Optional<String> getSessionName() {
@@ -54,8 +55,28 @@ public class SessionContext {
 		return this.sessionId;
 	}
 
-	public Environment getSessionEnv() {
-		return this.sessionEnv;
+	public Environment getOriginalSessionEnv() {
+		return this.originalSessionEnv;
+	}
+
+	public ExecutionContext<?> getExecutionContext() {
+		return executionContext;
+	}
+
+	public void setExecutionContext(ExecutionContext<?> executionContext) {
+		this.executionContext = executionContext;
+	}
+
+	/** Returns ExecutionContext.Builder with given {@link SessionContext} session context. */
+	public ExecutionContext.Builder createExecutionContextBuilder(Environment sessionEnv) {
+		return ExecutionContext.builder(
+			defaultContext.getDefaultEnv(),
+			sessionEnv,
+			defaultContext.getDependencies(),
+			defaultContext.getFlinkConfig(),
+			defaultContext.getClusterClientServiceLoader(),
+			defaultContext.getCommandLineOptions(),
+			defaultContext.getCommandLines());
 	}
 
 	@Override
@@ -69,11 +90,12 @@ public class SessionContext {
 		SessionContext context = (SessionContext) o;
 		return Objects.equals(sessionName, context.sessionName) &&
 			Objects.equals(sessionId, context.sessionId) &&
-			Objects.equals(sessionEnv, context.sessionEnv);
+			Objects.equals(originalSessionEnv, context.originalSessionEnv) &&
+			Objects.equals(executionContext, context.executionContext);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(sessionName, sessionId, sessionEnv);
+		return Objects.hash(sessionName, sessionId, originalSessionEnv, executionContext);
 	}
 }

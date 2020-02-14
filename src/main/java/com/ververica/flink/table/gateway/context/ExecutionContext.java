@@ -16,8 +16,9 @@
  * limitations under the License.
  */
 
-package com.ververica.flink.table.gateway;
+package com.ververica.flink.table.gateway.context;
 
+import com.ververica.flink.table.gateway.SqlExecutionException;
 import com.ververica.flink.table.gateway.config.Environment;
 import com.ververica.flink.table.gateway.config.entries.DeploymentEntry;
 import com.ververica.flink.table.gateway.config.entries.ExecutionEntry;
@@ -119,7 +120,7 @@ public class ExecutionContext<ClusterID> {
 	private static final Logger LOG = LoggerFactory.getLogger(ExecutionContext.class);
 
 	private final Environment environment;
-	private final SessionContext originalSessionContext;
+	private final Environment originalEnvironment;
 	private final ClassLoader classLoader;
 
 	private final Configuration flinkConfig;
@@ -137,7 +138,7 @@ public class ExecutionContext<ClusterID> {
 
 	private ExecutionContext(
 		Environment environment,
-		SessionContext originalSessionContext,
+		Environment originalEnvironment,
 		@Nullable SessionState sessionState,
 		List<URL> dependencies,
 		Configuration flinkConfig,
@@ -145,7 +146,7 @@ public class ExecutionContext<ClusterID> {
 		Options commandLineOptions,
 		List<CustomCommandLine> availableCommandLines) throws FlinkException {
 		this.environment = environment;
-		this.originalSessionContext = originalSessionContext;
+		this.originalEnvironment = originalEnvironment;
 
 		this.flinkConfig = flinkConfig;
 
@@ -181,13 +182,12 @@ public class ExecutionContext<ClusterID> {
 	}
 
 	/**
-	 * Get the {@link SessionContext} when initialize the ExecutionContext. It's usually used when resetting the session
-	 * properties.
+	 * Get the original {@link Environment}. It's usually used when resetting the session properties.
 	 *
-	 * @return the original session context.
+	 * @return the original environment.
 	 */
-	public SessionContext getOriginalSessionContext() {
-		return this.originalSessionContext;
+	public Environment getOriginalEnvironment() {
+		return this.originalEnvironment;
 	}
 
 	public ClassLoader getClassLoader() {
@@ -282,13 +282,13 @@ public class ExecutionContext<ClusterID> {
 	/** Returns a builder for this {@link ExecutionContext}. */
 	public static Builder builder(
 		Environment defaultEnv,
-		SessionContext sessionContext,
+		Environment sessionEnv,
 		List<URL> dependencies,
 		Configuration configuration,
 		ClusterClientServiceLoader serviceLoader,
 		Options commandLineOptions,
 		List<CustomCommandLine> commandLines) {
-		return new Builder(defaultEnv, sessionContext, dependencies, configuration,
+		return new Builder(defaultEnv, sessionEnv, dependencies, configuration,
 			serviceLoader, commandLineOptions, commandLines);
 	}
 
@@ -574,7 +574,7 @@ public class ExecutionContext<ClusterID> {
 		});
 
 		//--------------------------------------------------------------------------------------------------------------
-		// Step.4 Register views in specified order.
+		// Step.5 Register views in specified order.
 		//--------------------------------------------------------------------------------------------------------------
 		environment.getTables().forEach((name, entry) -> {
 			// if registering a view fails at this point,
@@ -586,7 +586,7 @@ public class ExecutionContext<ClusterID> {
 		});
 
 		//--------------------------------------------------------------------------------------------------------------
-		// Step.5 Set current catalog and database.
+		// Step.6 Set current catalog and database.
 		//--------------------------------------------------------------------------------------------------------------
 		// Switch to the current catalog.
 		Optional<String> catalog = environment.getExecution().getCurrentCatalog();
@@ -704,7 +704,7 @@ public class ExecutionContext<ClusterID> {
 	/** Builder for {@link ExecutionContext}. */
 	public static class Builder {
 		// Required members.
-		private final SessionContext sessionContext;
+		private final Environment sessionEnv;
 		private final List<URL> dependencies;
 		private final Configuration configuration;
 		private final ClusterClientServiceLoader serviceLoader;
@@ -720,14 +720,14 @@ public class ExecutionContext<ClusterID> {
 
 		private Builder(
 			Environment defaultEnv,
-			@Nullable SessionContext sessionContext,
+			@Nullable Environment sessionEnv,
 			List<URL> dependencies,
 			Configuration configuration,
 			ClusterClientServiceLoader serviceLoader,
 			Options commandLineOptions,
 			List<CustomCommandLine> commandLines) {
 			this.defaultEnv = defaultEnv;
-			this.sessionContext = sessionContext;
+			this.sessionEnv = sessionEnv;
 			this.dependencies = dependencies;
 			this.configuration = configuration;
 			this.serviceLoader = serviceLoader;
@@ -748,10 +748,8 @@ public class ExecutionContext<ClusterID> {
 		public ExecutionContext<?> build() {
 			try {
 				return new ExecutionContext<>(
-					this.currentEnv == null
-						? Environment.merge(defaultEnv, sessionContext.getSessionEnv())
-						: this.currentEnv,
-					this.sessionContext,
+					this.currentEnv == null ? Environment.merge(defaultEnv, sessionEnv) : this.currentEnv,
+					this.sessionEnv,
 					this.sessionState,
 					this.dependencies,
 					this.configuration,

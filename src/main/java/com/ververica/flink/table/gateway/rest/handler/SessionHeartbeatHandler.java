@@ -66,7 +66,7 @@ public class SessionHeartbeatHandler
 
 		String sessionId = request.getPathParameter(SessionIdPathParameter.class);
 		try {
-			LOG.info(String.format("heartbeat for Session: %s", sessionId));
+			LOG.info("heartbeat for Session: {}", sessionId);
 			sessionManager.getSession(sessionId);
 			return CompletableFuture.completedFuture(EmptyResponseBody.getInstance());
 		} catch (SqlGatewayException e) {

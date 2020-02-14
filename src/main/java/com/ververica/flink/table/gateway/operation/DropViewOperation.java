@@ -18,38 +18,50 @@
 
 package com.ververica.flink.table.gateway.operation;
 
-import com.ververica.flink.table.gateway.Executor;
 import com.ververica.flink.table.gateway.SqlExecutionException;
+import com.ververica.flink.table.gateway.config.Environment;
+import com.ververica.flink.table.gateway.config.entries.TableEntry;
 import com.ververica.flink.table.gateway.config.entries.ViewEntry;
+import com.ververica.flink.table.gateway.context.ExecutionContext;
+import com.ververica.flink.table.gateway.context.SessionContext;
 import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
 /**
  * Operation for DROP VIEW command.
  */
 public class DropViewOperation implements NonJobOperation {
-	private final String name;
-	private final String sessionId;
-	private final Executor executor;
+	private final SessionContext context;
+	private final String viewName;
 
-	public DropViewOperation(String name, String sessionId, Executor executor) {
-		this.name = name;
-		this.sessionId = sessionId;
-		this.executor = executor;
+	public DropViewOperation(SessionContext context, String viewName) {
+		this.context = context;
+		this.viewName = viewName;
 	}
 
 	@Override
 	public ResultSet execute() {
-		ViewEntry view = executor.listViews(sessionId).get(name);
-		if (view == null) {
-			throw new SqlExecutionException("'" + name + "' does not exist in the current session.");
+		Environment env = context.getExecutionContext().getEnvironment();
+		TableEntry tableEntry = env.getTables().get(viewName);
+		if (tableEntry == null || !(tableEntry instanceof ViewEntry)) {
+			throw new SqlExecutionException("'" + viewName + "' does not exist in the current session.");
 		}
 
-		try {
-			executor.removeView(sessionId, name);
-		} catch (SqlExecutionException e) {
-			executor.addView(sessionId, view.getName(), view.getQuery());
-			throw e;
+		// Here we rebuild the ExecutionContext because we want to ensure that all the remaining views can work fine.
+		// Assume the case:
+		//   view1=select 1;
+		//   view2=select * from view1;
+		// If we delete view1 successfully, then query view2 will throw exception because view1 does not exist. we want
+		// all the remaining views are OK, so do the ExecutionContext rebuilding to avoid breaking the view dependency.
+		Environment newEnv = env.clone();
+		if (newEnv.getTables().remove(viewName) != null) {
+			// Renew the ExecutionContext.
+			ExecutionContext<?> newExecutionContext = context
+				.createExecutionContextBuilder(context.getOriginalSessionEnv())
+				.env(newEnv)
+				.build();
+			context.setExecutionContext(newExecutionContext);
 		}
+
 		return OperationUtil.AFFECTED_ROW_COUNT0;
 	}
 }

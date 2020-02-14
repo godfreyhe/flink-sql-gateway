@@ -19,6 +19,7 @@
 package com.ververica.flink.table.gateway;
 
 import com.ververica.flink.table.gateway.SqlCommandParser.SqlCommandCall;
+import com.ververica.flink.table.gateway.context.SessionContext;
 import com.ververica.flink.table.gateway.operation.JobOperation;
 import com.ververica.flink.table.gateway.operation.Operation;
 import com.ververica.flink.table.gateway.operation.OperationFactory;
@@ -42,24 +43,20 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Session {
 	private static final Logger LOG = LoggerFactory.getLogger(Session.class);
 
-	private final SessionContext ctx;
+	private final SessionContext context;
 	private final String sessionId;
-	private final Executor executor;
 
 	private long lastVisitedTime;
 
 	private final Map<JobID, JobOperation> jobOperations;
 
-	public Session(SessionContext ctx, Executor executor) {
-		this.ctx = ctx;
-		this.sessionId = ctx.getSessionId();
-		this.executor = executor;
+	public Session(SessionContext context) {
+		this.context = context;
+		this.sessionId = context.getSessionId();
 
 		this.lastVisitedTime = System.currentTimeMillis();
 
 		this.jobOperations = new ConcurrentHashMap<>();
-
-		executor.openSession(ctx);
 	}
 
 	public void touch() {
@@ -70,20 +67,20 @@ public class Session {
 		return lastVisitedTime;
 	}
 
-	public SessionContext getSessionContext() {
-		return ctx;
+	public SessionContext getContext() {
+		return context;
 	}
 
 	public Tuple2<ResultSet, SqlCommandParser.SqlCommand> runStatement(String statement) throws SqlGatewayException {
-		LOG.debug(String.format("Session: %s, run statement: %s", sessionId, statement));
+		LOG.info("Session: {}, run statement: {}", sessionId, statement);
 		Optional<SqlCommandCall> callOpt = SqlCommandParser.parse(statement);
 		if (!callOpt.isPresent()) {
-			LOG.error(String.format("Session: %s, Unknown statement: %s", sessionId, statement));
+			LOG.error("Session: {}, Unknown statement: {}", sessionId, statement);
 			throw new SqlGatewayException("Unknown statement: " + statement);
 		}
 
 		SqlCommandCall call = callOpt.get();
-		Operation operation = OperationFactory.createOperation(call, sessionId, executor);
+		Operation operation = OperationFactory.createOperation(call, context);
 		ResultSet resultSet = operation.execute();
 
 		if (operation instanceof JobOperation) {
@@ -95,26 +92,26 @@ public class Session {
 	}
 
 	public JobStatus getJobStatus(JobID jobId) throws SqlGatewayException {
-		LOG.info(String.format("Session: %s, get status for job: %s", sessionId, jobId));
+		LOG.info("Session: {}, get status for job: {}", sessionId, jobId);
 		return getJobOperation(jobId).getJobStatus();
 	}
 
 	public void cancelJob(JobID jobId) throws SqlGatewayException {
-		LOG.info(String.format("Session: %s, cancel job: %s", sessionId, jobId));
+		LOG.info("Session: {}, cancel job: {}", sessionId, jobId);
 		getJobOperation(jobId).cancelJob();
 		jobOperations.remove(jobId);
 	}
 
 	public Optional<ResultSet> getJobResult(JobID jobId, long token, int maxFetchSize) throws SqlGatewayException {
-		LOG.info(String.format("Session: %s, get result for job: %s, token: %s, maxFetchSize: %s",
-			sessionId, jobId, token, maxFetchSize));
+		LOG.info("Session: {}, get result for job: {}, token: {}, maxFetchSize: {}",
+			sessionId, jobId, token, maxFetchSize);
 		return getJobOperation(jobId).getJobResult(token, maxFetchSize);
 	}
 
 	private JobOperation getJobOperation(JobID jobId) throws SqlGatewayException {
 		JobOperation jobOperation = jobOperations.get(jobId);
 		if (jobOperation == null) {
-			String msg = "Job: " + jobId + " does not exist in current session: " + sessionId + ".";
+			String msg = String.format("Job: %s does not exist in current session: %s.", jobId, sessionId);
 			LOG.error(msg);
 			throw new SqlGatewayException(msg);
 		} else {
@@ -122,7 +119,4 @@ public class Session {
 		}
 	}
 
-	public void close() {
-		executor.closeSession(sessionId);
-	}
 }

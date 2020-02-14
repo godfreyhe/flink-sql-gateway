@@ -18,40 +18,43 @@
 
 package com.ververica.flink.table.gateway.operation;
 
-import com.ververica.flink.table.gateway.Executor;
 import com.ververica.flink.table.gateway.SqlExecutionException;
+import com.ververica.flink.table.gateway.config.Environment;
+import com.ververica.flink.table.gateway.config.entries.TableEntry;
 import com.ververica.flink.table.gateway.config.entries.ViewEntry;
+import com.ververica.flink.table.gateway.context.ExecutionContext;
+import com.ververica.flink.table.gateway.context.SessionContext;
 import com.ververica.flink.table.gateway.rest.result.ResultSet;
+
+import org.apache.flink.table.api.TableEnvironment;
 
 /**
  * Operation for CREATE VIEW command.
  */
 public class CreateViewOperation implements NonJobOperation {
-	private final String name;
+	private final ExecutionContext<?> context;
+	private final String viewName;
 	private final String query;
-	private final String sessionId;
-	private final Executor executor;
 
-	public CreateViewOperation(String name, String query, String sessionId, Executor executor) {
-		this.name = name;
+	public CreateViewOperation(SessionContext context, String viewName, String query) {
+		this.context = context.getExecutionContext();
+		this.viewName = viewName;
 		this.query = query;
-		this.sessionId = sessionId;
-		this.executor = executor;
 	}
 
 	@Override
 	public ResultSet execute() {
-		ViewEntry previousView = executor.listViews(sessionId).get(name);
-		if (previousView != null) {
-			throw new SqlExecutionException("'" + name + "' has already been defined in the current session.");
+		Environment env = context.getEnvironment();
+		TableEntry tableEntry = env.getTables().get(viewName);
+		if (tableEntry != null && tableEntry instanceof ViewEntry) {
+			throw new SqlExecutionException("'" + viewName + "' has already been defined in the current session.");
 		}
 
-		try {
-			executor.addView(sessionId, name, query);
-		} catch (SqlExecutionException e) {
-			executor.removeView(sessionId, name);
-			throw e;
-		}
+		// TODO check the logic
+		TableEnvironment tableEnv = context.getTableEnvironment();
+		tableEnv.createTemporaryView(viewName, tableEnv.sqlQuery(query));
+		// Also attach the view to ExecutionContext#environment.
+		env.getTables().put(viewName, ViewEntry.create(viewName, query));
 		return OperationUtil.AFFECTED_ROW_COUNT0;
 	}
 }

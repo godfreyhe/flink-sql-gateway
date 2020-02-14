@@ -36,14 +36,6 @@ public class TypedResult<P> {
 		this.payload = payload;
 	}
 
-	public void setType(ResultType type) {
-		this.type = type;
-	}
-
-	public void setPayload(P payload) {
-		this.payload = payload;
-	}
-
 	public ResultType getType() {
 		return type;
 	}

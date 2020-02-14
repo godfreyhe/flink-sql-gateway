@@ -20,6 +20,8 @@ package com.ververica.flink.table.gateway;
 
 import com.ververica.flink.table.gateway.config.Environment;
 import com.ververica.flink.table.gateway.config.entries.ExecutionEntry;
+import com.ververica.flink.table.gateway.context.DefaultContext;
+import com.ververica.flink.table.gateway.context.SessionContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,8 +41,7 @@ import java.util.concurrent.TimeUnit;
 public class SessionManager {
 	private static final Logger LOG = LoggerFactory.getLogger(SessionManager.class);
 
-	private final Environment defaultEnvironment;
-	private final Executor executor;
+	private final DefaultContext defaultContext;
 
 	private final long idleTimeout;
 	private final long checkInterval;
@@ -51,30 +52,29 @@ public class SessionManager {
 	private ScheduledExecutorService executorService;
 	private ScheduledFuture timeoutCheckerFuture;
 
-	public SessionManager(Environment defaultEnv, Executor executor) {
-		this.defaultEnvironment = defaultEnv;
-		this.executor = executor;
-		this.idleTimeout = defaultEnv.getSession().getIdleTimeout();
-		this.checkInterval = defaultEnv.getSession().getCheckInterval();
-		this.maxCount = defaultEnv.getSession().getMaxCount();
+	public SessionManager(DefaultContext defaultContext) {
+		this.defaultContext = defaultContext;
+		Environment env = defaultContext.getDefaultEnv();
+		this.idleTimeout = env.getSession().getIdleTimeout();
+		this.checkInterval = env.getSession().getCheckInterval();
+		this.maxCount = env.getSession().getMaxCount();
 		this.sessions = new ConcurrentHashMap<>();
 	}
 
 	public void open() {
-		executor.start();
 		if (checkInterval > 0 && idleTimeout > 0) {
 			executorService = Executors.newSingleThreadScheduledExecutor();
 			timeoutCheckerFuture = executorService.scheduleAtFixedRate(() -> {
-				LOG.info("Start to remove expired session, current session count: " + sessions.size());
+				LOG.info("Start to remove expired session, current session count: {}", sessions.size());
 				for (Map.Entry<String, Session> entry : sessions.entrySet()) {
 					String sessionId = entry.getKey();
 					Session session = entry.getValue();
 					if (isSessionExpired(session)) {
-						LOG.info(String.format("Session: %s is expired, close it...", sessionId));
+						LOG.info("Session: {} is expired, close it...", sessionId);
 						closeSession(session);
 					}
 				}
-				LOG.info("Remove expired session finished, current session count: " + sessions.size());
+				LOG.info("Remove expired session finished, current session count: {}", sessions.size());
 			}, checkInterval, checkInterval, TimeUnit.MILLISECONDS);
 		}
 	}
@@ -111,16 +111,17 @@ public class SessionManager {
 				ExecutionEntry.EXECUTION_RESULT_MODE_VALUE_CHANGELOG);
 		}
 
-		Environment sessionEnv = Environment.enrich(defaultEnvironment, newProperties, Collections.emptyMap());
+		Environment sessionEnv = Environment.enrich(
+			defaultContext.getDefaultEnv(), newProperties, Collections.emptyMap());
 
 		String sessionId = SessionID.generate().toHexString();
-		SessionContext ctx = new SessionContext(sessionName, sessionId, sessionEnv);
-		Session session = new Session(ctx, executor);
+		SessionContext sessionContext = new SessionContext(sessionName, sessionId, sessionEnv, defaultContext);
+
+		Session session = new Session(sessionContext);
 		sessions.put(sessionId, session);
 
-		LOG.info(String.format(
-			"Session: %s is created. sessionName: %s, planner: %s, executionType: %s, properties: %s.",
-			sessionId, sessionName, planner, executionType, properties));
+		LOG.info("Session: {} is created. sessionName: {}, planner: {}, executionType: {}, properties: {}.",
+			sessionId, sessionName, planner, executionType, properties);
 
 		return sessionId;
 	}
@@ -131,17 +132,16 @@ public class SessionManager {
 	}
 
 	private void closeSession(Session session) {
-		String sessionId = session.getSessionContext().getSessionId();
-		session.close();
+		String sessionId = session.getContext().getSessionId();
 		sessions.remove(sessionId);
-		LOG.info(String.format("Session: %s is closed.", sessionId));
+		LOG.info("Session: {} is closed.", sessionId);
 	}
 
 	public Session getSession(String sessionId) throws SqlGatewayException {
 		// TODO lock sessions to prevent fetching an expired session?
 		Session session = sessions.get(sessionId);
 		if (session == null) {
-			String msg = "Session " + sessionId + " does not exist.";
+			String msg = String.format("Session: %s does not exist.", sessionId);
 			LOG.error(msg);
 			throw new SqlGatewayException(msg);
 		}
@@ -154,7 +154,8 @@ public class SessionManager {
 			return;
 		}
 		if (sessions.size() > maxCount) {
-			String msg = "Failed to create session, the count of alive session exceeds the max count: " + maxCount;
+			String msg = String.format(
+				"Failed to create session, the count of alive session exceeds the max count: %s", maxCount);
 			LOG.error(msg);
 			throw new SqlGatewayException(msg);
 		}
