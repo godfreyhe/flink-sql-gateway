@@ -182,8 +182,7 @@ public class ExecutionContext<ClusterID> {
 	}
 
 	/**
-	 * Get the {@link SessionContext} when initialize the ExecutionContext. It's usually used when resetting the session
-	 * properties.
+	 * Get the original {@link Environment}. It's usually used when resetting the session properties.
 	 *
 	 * @return the original environment.
 	 */
@@ -575,7 +574,7 @@ public class ExecutionContext<ClusterID> {
 		});
 
 		//--------------------------------------------------------------------------------------------------------------
-		// Step.4 Register views in specified order.
+		// Step.5 Register views in specified order.
 		//--------------------------------------------------------------------------------------------------------------
 		environment.getTables().forEach((name, entry) -> {
 			// if registering a view fails at this point,
@@ -587,7 +586,7 @@ public class ExecutionContext<ClusterID> {
 		});
 
 		//--------------------------------------------------------------------------------------------------------------
-		// Step.5 Set current catalog and database.
+		// Step.6 Set current catalog and database.
 		//--------------------------------------------------------------------------------------------------------------
 		// Switch to the current catalog.
 		Optional<String> catalog = environment.getExecution().getCurrentCatalog();

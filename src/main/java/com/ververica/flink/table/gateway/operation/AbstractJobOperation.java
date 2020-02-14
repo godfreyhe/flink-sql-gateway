@@ -41,7 +41,7 @@ public abstract class AbstractJobOperation implements JobOperation {
 	protected volatile JobID jobId;
 
 	private long currentToken;
-	private int previousFetchSize;
+	private int previousMaxFetchSize;
 	private int previousResultSetSize;
 	private LinkedList<Row> bufferedResults;
 	@Nullable
@@ -52,7 +52,7 @@ public abstract class AbstractJobOperation implements JobOperation {
 
 	public AbstractJobOperation() {
 		this.currentToken = 0;
-		this.previousFetchSize = 0;
+		this.previousMaxFetchSize = 0;
 		this.previousResultSetSize = 0;
 		this.bufferedResults = new LinkedList<>();
 		this.bufferedChangeFlags = null;
@@ -104,15 +104,16 @@ public abstract class AbstractJobOperation implements JobOperation {
 				currentToken++;
 			}
 
-			previousFetchSize = maxFetchSize;
+			previousMaxFetchSize = maxFetchSize;
 			if (maxFetchSize > 0) {
 				previousResultSetSize = Math.min(bufferedResults.size(), maxFetchSize);
 			} else {
 				previousResultSetSize = bufferedResults.size();
 			}
 		} else if (token == currentToken - 1 && token >= 0) {
-			if (previousFetchSize != maxFetchSize) {
-				throw new SqlGatewayException("As the same token is provided, fetch size must be the same.");
+			if (previousMaxFetchSize != maxFetchSize) {
+				throw new SqlGatewayException(
+					"As the same token is provided, fetch size must be the same. Expecting max_fetch_size to be " + previousMaxFetchSize);
 			}
 		} else {
 			String msg;
