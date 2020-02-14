@@ -62,6 +62,7 @@ public class ChangelogResult<C> extends AbstractResult<C, Tuple2<Boolean, Row>> 
 	private final Object resultLock;
 	private AtomicReference<SqlExecutionException> executionException = new AtomicReference<>();
 	private final List<Tuple2<Boolean, Row>> changeRecordBuffer;
+	// TODO add this to config
 	private static final int CHANGE_RECORD_BUFFER_SIZE = 5_000;
 
 	public ChangelogResult(
