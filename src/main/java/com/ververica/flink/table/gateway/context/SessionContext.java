@@ -44,6 +44,7 @@ public class SessionContext {
 		this.sessionId = sessionId;
 		this.originalSessionEnv = originalSessionEnv;
 		this.defaultContext = defaultContext;
+		this.executionContext = createExecutionContextBuilder(originalSessionEnv).build();
 	}
 
 	public Optional<String> getSessionName() {

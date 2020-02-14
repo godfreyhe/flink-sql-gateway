@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Abstract Operation.
+ * A default implementation of JobOperation.
  */
 public abstract class AbstractJobOperation implements JobOperation {
 	protected volatile JobID jobId;
@@ -115,8 +115,13 @@ public abstract class AbstractJobOperation implements JobOperation {
 				throw new SqlGatewayException("As the same token is provided, fetch size must be the same.");
 			}
 		} else {
-			throw new SqlGatewayException(
-				"Expecting token to be " + currentToken + " or " + (currentToken - 1) + ", but found " + token + ".");
+			String msg;
+			if (currentToken == 0) {
+				msg = "Expecting token to be 0, but found " + token + ".";
+			} else {
+				msg = "Expecting token to be " + currentToken + " or " + (currentToken - 1) + ", but found " + token + ".";
+			}
+			throw new SqlGatewayException(msg);
 		}
 
 		return Optional.of(new ResultSet(
