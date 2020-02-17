@@ -21,6 +21,7 @@ package com.ververica.flink.table.gateway.context;
 import com.ververica.flink.table.gateway.SqlGatewayException;
 import com.ververica.flink.table.gateway.config.Environment;
 
+import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.client.cli.CliFrontend;
 import org.apache.flink.client.cli.CliFrontendParser;
 import org.apache.flink.client.cli.CustomCommandLine;
@@ -34,6 +35,7 @@ import org.apache.flink.core.plugin.PluginUtils;
 import org.apache.commons.cli.Options;
 
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -71,6 +73,24 @@ public class DefaultContext {
 			throw new SqlGatewayException("Could not load Flink configuration.", e);
 		}
 		clusterClientServiceLoader = new DefaultClusterClientServiceLoader();
+	}
+
+	/**
+	 * Constructor for testing purposes.
+	 */
+	@VisibleForTesting
+	public DefaultContext(
+			Environment defaultEnv,
+			List<URL> dependencies,
+			Configuration flinkConfig,
+			CustomCommandLine commandLine,
+			ClusterClientServiceLoader clusterClientServiceLoader) {
+		this.defaultEnv = defaultEnv;
+		this.dependencies = dependencies;
+		this.flinkConfig = flinkConfig;
+		this.commandLines = Collections.singletonList(commandLine);
+		this.commandLineOptions = collectCommandLineOptions(commandLines);
+		this.clusterClientServiceLoader = Objects.requireNonNull(clusterClientServiceLoader);
 	}
 
 	public Configuration getFlinkConfig() {
