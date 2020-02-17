@@ -10,7 +10,7 @@ Currently, the REST API is internal API and we recommend users to interact with 
 Flink-sql-gateway stores the session properties in memory now. If the service is stopped or crashed, all properties are lost. We will improve this in future.
 
 
-# Startup gateway
+# Startup gateway service
 
 There are four steps to starting the service from scratch:
 
@@ -169,14 +169,14 @@ The full list of offered SQL JARs and documentation about how to use them can be
 The following statements are supported now.
 |  statement   | comment  |
 |  ----  | ----  |
-| SHOW_CATALOGS  | Lists all registered catalogs |
-| SHOW_CURRENT_CATALOG  | Shows current catalog |
-| SHOW_DATABASES  | Lists all databases in the current catalog |
-| SHOW_CURRENT_DATABASE  | Shows current database in current catalog |
-| SHOW_TABLES  | Lists all tables in the current database of the current catalog |
-| SHOW_FUNCTIONS  | Lists all functions |
-| SHOW_MODULES  | Lists all modules |
-| USE_CATALOG catalog_name | Sets a catalog with given name as the current catalog |
+| SHOW CATALOGS | Lists all registered catalogs |
+| SHOW CURRENT_CATALOG | Shows current catalog |
+| SHOW DATABASES | Lists all databases in the current catalog |
+| SHOW CURRENT DATABASE | Shows current database in current catalog |
+| SHOW TABLES | Lists all tables in the current database of the current catalog |
+| SHOW FUNCTIONS | Lists all functions |
+| SHOW MODULES | Lists all modules |
+| USE CATALOG catalog_name | Sets a catalog with given name as the current catalog |
 | USE database_name | Sets a database with given name as the current database of the current catalog |
 | CREATE TABLE table_name ... | Creates a table with a DDL statement |
 | DROP TABLE table_name | Drops a table with given name |
