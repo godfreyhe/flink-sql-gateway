@@ -59,7 +59,7 @@ public class DescribeOperation implements NonJobOperation {
 			data.add(Row.of(schemaJson));
 
 			return new ResultSet(
-				Collections.singletonList(ColumnInfo.create(ConstantNames.SCHEMA, new VarCharType(true, length))),
+				Collections.singletonList(ColumnInfo.create(ConstantNames.SCHEMA, new VarCharType(false, length))),
 				data);
 		} catch (Throwable t) {
 			// catch everything such that the query does not crash the executor

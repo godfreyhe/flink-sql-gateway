@@ -1,14 +1,15 @@
-# Flink-sql-gateway
+# Flink SQL Gateway
 
-Flink-sql-gateway is a service that allows other applications to easily interact with a Flink cluster through a REST API. 
+Flink SQL gateway is a service that allows other applications to easily interact with a Flink cluster through a REST API. 
 
 User applications (e.g. Java/Python/Shell program, Postman) can use the REST API to submit queries, cancel jobs, retrieve results, etc. 
 
-[flink-jdbc-driver](https://github.com/ververica/flink-jdbc-driver) enables JDBC clients to connect to flink-sql-gateway based on the REST API.
+[Flink JDBC driver](https://github.com/ververica/flink-jdbc-driver) enables JDBC clients to connect to Flink SQL gateway based on the REST API.
 
 Currently, the REST API is internal API and we recommend users to interact with the gateway through JDBC API. 
-Flink-sql-gateway stores the session properties in memory now. If the service is stopped or crashed, all properties are lost. We will improve this in future.
+Flink SQL gateway stores the session properties in memory now. If the service is stopped or crashed, all properties are lost. We will improve this in future.
 
+This project is at an early stage. Feel free to file an issue if you meet any problems or have any suggestions.
 
 # Startup gateway service
 
@@ -20,11 +21,11 @@ There are four steps to starting the service from scratch:
 
 3. Configures the FLINK_HOME environment variable using the following command (and add the same into ~/.bashrc): export FLINK_HOME=<flink-install-dir>
 
-4. Downloads (or builds) the flink-sql-gateway package and executes `./bin/start-gateway.sh`
+4. Downloads (or builds) the flink-sql-gateway package and executes `./bin/sql-gateway.sh`
 
 The gateway can be started with the following optional CLI commands.
 ```
-./bin/start-gateway.sh -h
+./bin/sql-gateway.sh -h
 
 The following options are available:
      -d,--defaults <default configuration file>   The properties with which every new session is initialized. 

@@ -27,6 +27,7 @@ import com.ververica.flink.table.gateway.rest.SqlGatewayEndpoint;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.runtime.rest.RestServerEndpointConfiguration;
+import org.apache.flink.runtime.util.EnvironmentInformation;
 import org.apache.flink.util.JarUtils;
 
 import org.slf4j.Logger;
@@ -140,6 +141,7 @@ public class SqlGateway {
 	// --------------------------------------------------------------------------------------------
 
 	public static void main(String[] args) {
+		checkFlinkVersion();
 		final GatewayOptions options = GatewayOptionsParser.parseGatewayOptions(args);
 		if (options.isPrintHelp()) {
 			GatewayOptionsParser.printHelp();
@@ -160,6 +162,14 @@ public class SqlGateway {
 				throw new SqlGatewayException(
 					"Unexpected exception. This is a bug. Please consider filing an issue.", t);
 			}
+		}
+	}
+
+	private static void checkFlinkVersion() {
+		String flinkVersion = EnvironmentInformation.getVersion();
+		if (!flinkVersion.startsWith("1.10")) {
+			LOG.error("Only Flink-1.10 is supported now!");
+			throw new SqlGatewayException("Only Flink-1.10 is supported now!");
 		}
 	}
 

@@ -23,7 +23,11 @@ import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.api.WatermarkSpec;
 import org.apache.flink.table.api.constraints.UniqueConstraint;
 import org.apache.flink.table.types.DataType;
+import org.apache.flink.table.types.logical.LocalZonedTimestampType;
 import org.apache.flink.table.types.logical.LogicalType;
+import org.apache.flink.table.types.logical.TimestampKind;
+import org.apache.flink.table.types.logical.TimestampType;
+import org.apache.flink.table.types.logical.ZonedTimestampType;
 import org.apache.flink.table.types.logical.utils.LogicalTypeParser;
 import org.apache.flink.table.types.utils.LogicalTypeDataTypeConverter;
 
@@ -188,8 +192,45 @@ public class TableSchemaUtil {
 			JsonParser typeParser = jsonNode.traverse();
 			typeParser.nextToken();
 			String type = ctx.readValue(typeParser, String.class);
-			LogicalType logicalType = LogicalTypeParser.parse(type);
+			LogicalType logicalType;
+			// TODO remove this after https://issues.apache.org/jira/browse/FLINK-16110 is fixed
+			if (type.startsWith("TIMESTAMP")) {
+				logicalType = parserTimestampType(type);
+			} else {
+				// TODO use user classloader
+				logicalType = LogicalTypeParser.parse(type);
+			}
+
 			return LogicalTypeDataTypeConverter.toDataType(logicalType);
+		}
+	}
+
+	/**
+	 * Parse type looks like "TIMESTAMP(3) *ROWTIME*" and "TIMESTAMP(3) *PROCTIME*".
+	 */
+	private static LogicalType parserTimestampType(String type) {
+		String newType;
+		TimestampKind kind;
+		if (type.contains("*ROWTIME*")) {
+			newType = type.replace("*ROWTIME*", "");
+			kind = TimestampKind.ROWTIME;
+		} else if (type.contains("*PROCTIME*")) {
+			newType = type.replace("*PROCTIME*", "");
+			kind = TimestampKind.PROCTIME;
+		} else {
+			// TODO use user classloader
+			return LogicalTypeParser.parse(type);
+		}
+
+		LogicalType t = LogicalTypeParser.parse(newType);
+		if (t instanceof TimestampType) {
+			return new TimestampType(t.isNullable(), kind, ((TimestampType) t).getPrecision());
+		} else if (t instanceof LocalZonedTimestampType) {
+			return new LocalZonedTimestampType(t.isNullable(), kind, ((LocalZonedTimestampType) t).getPrecision());
+		} else if (t instanceof ZonedTimestampType) {
+			return new ZonedTimestampType(t.isNullable(), kind, ((ZonedTimestampType) t).getPrecision());
+		} else {
+			throw new UnsupportedOperationException("Unsupported Timestamp type: " + type);
 		}
 	}
 

@@ -27,6 +27,7 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.annotatio
 import javax.annotation.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -75,4 +76,31 @@ public class ResultSet {
 		return Optional.ofNullable(changeFlags);
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		ResultSet resultSet = (ResultSet) o;
+		return columns.equals(resultSet.columns) &&
+			data.equals(resultSet.data) &&
+			Objects.equals(changeFlags, resultSet.changeFlags);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(columns, data, changeFlags);
+	}
+
+	@Override
+	public String toString() {
+		return "ResultSet{" +
+			"columns=" + columns +
+			", data=" + data +
+			", changeFlags=" + changeFlags +
+			'}';
+	}
 }

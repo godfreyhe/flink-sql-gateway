@@ -25,6 +25,7 @@ import com.ververica.flink.table.gateway.rest.result.ColumnInfo;
 import com.ververica.flink.table.gateway.rest.result.ConstantNames;
 import com.ververica.flink.table.gateway.rest.result.ResultSet;
 
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.table.types.logical.VarCharType;
 import org.apache.flink.types.Row;
 
@@ -61,15 +62,15 @@ public class SetOperation implements NonJobOperation {
 		// list all properties
 		if (key == null) {
 			List<Row> data = new ArrayList<>();
-			Integer maxKeyLen = 1, maxValueLen = 1;
-			buildResult(env.getExecution().asTopLevelMap(), data, maxKeyLen, maxValueLen);
-			buildResult(env.getDeployment().asTopLevelMap(), data, maxKeyLen, maxValueLen);
-			buildResult(env.getConfiguration().asMap(), data, maxKeyLen, maxValueLen);
+			Tuple2<Integer, Integer> maxKeyLenAndMaxValueLen = new Tuple2<>(1, 1);
+			buildResult(env.getExecution().asTopLevelMap(), data, maxKeyLenAndMaxValueLen);
+			buildResult(env.getDeployment().asTopLevelMap(), data, maxKeyLenAndMaxValueLen);
+			buildResult(env.getConfiguration().asMap(), data, maxKeyLenAndMaxValueLen);
 
 			return new ResultSet(
 				Arrays.asList(
-					ColumnInfo.create(ConstantNames.KEY, new VarCharType(true, maxKeyLen)),
-					ColumnInfo.create(ConstantNames.VALUE, new VarCharType(true, maxValueLen))),
+					ColumnInfo.create(ConstantNames.KEY, new VarCharType(true, maxKeyLenAndMaxValueLen.f0)),
+					ColumnInfo.create(ConstantNames.VALUE, new VarCharType(true, maxKeyLenAndMaxValueLen.f1))),
 				data);
 		} else {
 			// TODO avoid to build a new Environment for some cases
@@ -89,13 +90,18 @@ public class SetOperation implements NonJobOperation {
 		}
 	}
 
-	private void buildResult(Map<String, String> properties, List<Row> data, Integer maxKeyLen, Integer maxValueLen) {
+	private void buildResult(
+		Map<String, String> properties,
+		List<Row> data,
+		Tuple2<Integer, Integer> maxKeyLenAndMaxValueLen) {
 		for (Map.Entry<String, String> entry : properties.entrySet()) {
 			String key = entry.getKey();
 			String value = entry.getValue();
 			data.add(Row.of(key, value));
-			maxKeyLen = Math.max(maxKeyLen, key.length());
-			maxValueLen = Math.max(maxValueLen, value.length());
+			// update max key length
+			maxKeyLenAndMaxValueLen.f0 = Math.max(maxKeyLenAndMaxValueLen.f0, key.length());
+			// update max value length
+			maxKeyLenAndMaxValueLen.f1 = Math.max(maxKeyLenAndMaxValueLen.f1, value.length());
 		}
 	}
 }
