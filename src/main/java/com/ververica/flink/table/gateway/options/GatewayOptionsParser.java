@@ -53,8 +53,8 @@ public class GatewayOptionsParser {
 		.required(false)
 		.longOpt("port")
 		.numberOfArgs(1)
-		.argName("gateway server port")
-		.desc("gateway server port")
+		.argName("service port")
+		.desc("The port to which the REST client connects to.")
 		.build();
 
 	public static final Option OPTION_DEFAULTS = Option

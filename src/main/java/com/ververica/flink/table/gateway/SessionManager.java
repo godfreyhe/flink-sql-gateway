@@ -155,7 +155,7 @@ public class SessionManager {
 		}
 		if (sessions.size() > maxCount) {
 			String msg = String.format(
-				"Failed to create session, the count of alive session exceeds the max count: %s", maxCount);
+				"Failed to create session, the count of active sessions exceeds the max count: %s", maxCount);
 			LOG.error(msg);
 			throw new SqlGatewayException(msg);
 		}

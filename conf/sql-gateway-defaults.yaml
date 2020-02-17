@@ -40,9 +40,9 @@ session:
   # the minimum unit is in milliseconds.
   idle-timeout: 1d
   # The check interval for session idle timeout, which can be disabled by setting to zero.
-  # the minimum unit is in milliseconds.“
+  # the minimum unit is in milliseconds.
   check-interval: 1h
-  # max-session count is alive, which can be disabled by setting to zero.
+  # Max count of active sessions, which can be disabled by setting to zero.
   max-count: 1000000
 
 
@@ -119,8 +119,6 @@ catalogs: [] # empty list
 # Properties that change the fundamental execution behavior of a table program.
 
 execution:
-  # maximum number of maintained rows in 'table' presentation of results
-  max-table-result-rows: 1000000
   # parallelism of the program
   parallelism: 1
   # maximum parallelism
@@ -129,11 +127,6 @@ execution:
   current-catalog: default_catalog
   # current database of the current catalog (default database of the catalog by default)
   current-database: default_database
-  # controls how table programs are restarted in case of a failures
-  restart-strategy:
-    # strategy type
-    # possible values are "fixed-delay", "failure-rate", "none", or "fallback" (default)
-    type: fallback
 
 #==============================================================================
 # Configuration options
